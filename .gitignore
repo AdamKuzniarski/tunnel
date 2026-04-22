@@ -1,0 +1,48 @@
+# macOS
+.DS_Store
+
+# IntelliJ / JetBrains
+.idea/
+*.iml
+
+# Node / Expo / React Native
+node_modules/
+.expo/
+.expo-shared/
+.expo/web/
+web-build/
+dist/
+coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env files (keep examples)
+.env
+.env.*
+!.env.example
+
+# React Native cache
+.metro-cache/
+
+# Xcode / Swift
+DerivedData/
+build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserdatad/
+*.xcuserstate
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+
+# Optional (Expo prebuild generated folders)
+# ios/
+# android/
+
