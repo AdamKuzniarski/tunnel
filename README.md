@@ -1,6 +1,6 @@
-# Tunnel
+# tunnel
 
-Tunnel is an iPhone-first focus app learning project.
+tunnel is an iPhone-first focus app learning project.
 
 The idea is to combine app blocking, intentional friction, and a physical unlock ritual.
 The long-term concept is to let a user start a focus session, block selected apps, and later unlock with more effort, potentially through NFC.
@@ -15,7 +15,7 @@ Main learning goals:
 - understand Expo Router and feature-based app structure
 - learn where JavaScript ends and native iOS work begins
 - explore iOS-native capabilities like Screen Time APIs and NFC
-- practice architecture thinking, scope control, and technical decision making
+- practice architecture thinking, scope control, and technical decision-making
 
 ## Current stage
 
