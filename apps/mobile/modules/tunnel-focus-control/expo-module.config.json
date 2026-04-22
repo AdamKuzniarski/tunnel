@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["TunnelFocusControlModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.tunnelfocuscontrol.TunnelFocusControlModule"]
+  }
+}
