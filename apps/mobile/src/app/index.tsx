@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function HomeScreen() {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Tunnel</Text>
+            <Text style={styles.title}>tunnel</Text>
             <Text style={styles.subtitle}>iPhone-first focus app learning project</Text>
 
             <View style={styles.links}>
