@@ -17,6 +17,9 @@ export default function HomeScreen() {
                 <Link href="/settings" style={styles.link}>
                     Go to Settings
                 </Link>
+                <Link href="/native-test" style={styles.link}>
+                    Go to Native Test
+                </Link>
             </View>
         </View>
     );
