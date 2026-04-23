@@ -1,0 +1,36 @@
+name: Spike
+description: Forschungs- oder Feasibility-Ticket
+title: "[SPIKE] "
+labels: ["type:spike"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Frage
+      description: Was genau soll untersucht werden?
+    validations:
+      required: true
+
+  - type: textarea
+    id: assumptions
+    attributes:
+      label: Annahmen
+      description: Welche Hypothesen testen wir?
+    validations:
+      required: true
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: Vorgehen
+      description: Wie wird getestet?
+    validations:
+      required: true
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Erwartetes Ergebnis
+      description: Welche Erkenntnis soll am Ende da sein?
+    validations:
+      required: true

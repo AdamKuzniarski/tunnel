@@ -1,0 +1,46 @@
+name: Task
+description: Technische Aufgabe oder Setup-Schritt
+title: "[TASK] "
+labels: []
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Ziel
+      description: Was soll erreicht werden?
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Warum
+      description: Warum ist das wichtig?
+    validations:
+      required: true
+
+  - type: textarea
+    id: todo
+    attributes:
+      label: Schritte
+      description: Konkrete Arbeitsschritte
+      placeholder: |
+        - Schritt 1
+        - Schritt 2
+        - Schritt 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of Done
+      description: Woran erkennst du, dass das Ticket fertig ist?
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Abhängigkeiten
+      placeholder: z. B. TUN-001
