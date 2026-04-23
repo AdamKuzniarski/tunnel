@@ -24,21 +24,29 @@ public class TunnelFocusControlModule: Module {
       return "Hello word from Swift!!"
     }
 
-    AsyncFunction("getAuthorizationStatus") {()-> String in
-      let status = await MainActor.run{
-        AuthorizationCenter.shared.authorizationStatus
-      }
-      switch status{
-      case .notDetermined:
-        return "notDetermined"
+    AsyncFunction("requestAuthorization") { () async throws -> String in
+      do {
+        try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+
+        let status = await MainActor.run {
+          AuthorizationCenter.shared.authorizationStatus
+        }
+
+        switch status {
+        case .notDetermined:
+          return "notDetermined"
         case .denied:
-        return "denied"
+          return "denied"
         case .approved:
-        return "approved"
-      case .approvedWithDataAccess:
-        return "approvedWithDataAccess"
-      @unknown default:
-        return "unknown"
+          return "approved"
+        case .approvedWithDataAccess:
+          return "approvedWithDataAccess"
+        @unknown default:
+          return "unknown"
+        }
+      } catch {
+        print("FamilyControls requestAuthorization error: \(error)")
+        throw error
       }
     }
     // Defines a JavaScript function that always returns a Promise and whose native code
