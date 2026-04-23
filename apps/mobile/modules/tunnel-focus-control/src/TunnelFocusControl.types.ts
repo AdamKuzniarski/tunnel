@@ -4,6 +4,13 @@ export type OnLoadEventPayload = {
   url: string;
 };
 
+export type TunnelAuthorizationStatus =
+  | 'notDetermined'
+  | 'denied'
+  | 'approved'
+  | 'approvedWithDataAccess'
+  | 'unknown';
+
 export type TunnelFocusControlModuleEvents = {
   onChange: (params: ChangeEventPayload) => void;
 };
