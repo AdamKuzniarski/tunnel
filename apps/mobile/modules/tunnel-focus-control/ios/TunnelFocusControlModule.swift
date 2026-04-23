@@ -20,7 +20,7 @@ public class TunnelFocusControlModule: Module {
 
     // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
     Function("hello") {
-      return "Hello world! 👋"
+      return "Hello word from Swift!!"
     }
 
     // Defines a JavaScript function that always returns a Promise and whose native code
