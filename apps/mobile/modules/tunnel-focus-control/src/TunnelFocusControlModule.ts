@@ -1,11 +1,15 @@
 import { NativeModule, requireNativeModule } from 'expo';
 
-import { TunnelFocusControlModuleEvents } from './TunnelFocusControl.types';
+import {
+  TunnelAuthorizationStatus,
+  TunnelFocusControlModuleEvents,
+} from './TunnelFocusControl.types';
 
 declare class TunnelFocusControlModule extends NativeModule<TunnelFocusControlModuleEvents> {
   PI: number;
   hello(): string;
   setValueAsync(value: string): Promise<void>;
+  getAuthorizationStatus(): Promise<TunnelAuthorizationStatus>;
 }
 
 // This call loads the native module object from the JSI.

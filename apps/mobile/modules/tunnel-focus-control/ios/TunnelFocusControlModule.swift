@@ -1,4 +1,5 @@
 import ExpoModulesCore
+import FamilyControls
 
 public class TunnelFocusControlModule: Module {
   // Each module class must implement the definition function. The definition consists of components
@@ -23,6 +24,23 @@ public class TunnelFocusControlModule: Module {
       return "Hello word from Swift!!"
     }
 
+    AsyncFunction("getAuthorizationStatus") {()-> String in
+      let status = await MainActor.run{
+        AuthorizationCenter.shared.authorizationStatus
+      }
+      switch status{
+      case .notDetermined:
+        return "notDetermined"
+        case .denied:
+        return "denied"
+        case .approved:
+        return "approved"
+      case .approvedWithDataAccess:
+        return "approvedWithDataAccess"
+      @unknown default:
+        return "unknown"
+      }
+    }
     // Defines a JavaScript function that always returns a Promise and whose native code
     // is by default dispatched on the different thread than the JavaScript runtime runs on.
     AsyncFunction("setValueAsync") { (value: String) in
@@ -46,3 +64,4 @@ public class TunnelFocusControlModule: Module {
     }
   }
 }
+
