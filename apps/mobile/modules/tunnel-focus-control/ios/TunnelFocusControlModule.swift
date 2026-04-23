@@ -25,6 +25,9 @@ public class TunnelFocusControlModule: Module {
     }
 
     AsyncFunction("requestAuthorization") { () async throws -> String in
+      guard #available(iOS 16.0, *) else {
+        return "unsupported"
+      }
       do {
         try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
 
