@@ -54,7 +54,7 @@ export default function NativeTestScreen() {
       <Text style={styles.value}>{lastAction}</Text>
 
       {loading ? <Text style={styles.info}>Loading...</Text> : null}
-      {loading ? <Text style={styles.error}>Error: {error}</Text> : null}
+      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
 
       <View style={styles.buttonGroup}>
         <Button title={'Get Authorization Status'} onPress={handleGetAuthorizationStatus} />
