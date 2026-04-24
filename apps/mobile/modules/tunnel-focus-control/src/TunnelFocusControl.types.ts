@@ -9,7 +9,8 @@ export type TunnelAuthorizationStatus =
   | 'denied'
   | 'approved'
   | 'approvedWithDataAccess'
-  | 'unknown';
+  | 'unknown'
+  | 'unsupported';
 
 export type TunnelFocusControlModuleEvents = {
   onChange: (params: ChangeEventPayload) => void;
