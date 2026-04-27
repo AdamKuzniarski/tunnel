@@ -1,29 +1,101 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Button } from 'react-native';
 import { TunnelFocusControlView } from '../../modules/tunnel-focus-control';
 import { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
+import {
+  clearSelectionSummary,
+  loadSelectionSummary,
+  saveSelectionSummary,
+} from '@/services/selectionStorage';
 
 export default function SelectionTestScreen() {
   const [summary, setSummary] = useState<TunnelSelectionSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [lastAction, setLastAction] = useState('No action yet.');
+
+  useEffect(() => {
+    const initializeSelection = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const storedSummary = await loadSelectionSummary();
+        setSummary(storedSummary);
+
+        if (storedSummary) {
+          setLastAction('Loaded stored selection summary.');
+        } else {
+          setLastAction('No stored selection summary found.');
+        }
+      } catch (err) {
+        console.log('loadSelectionSummary error: ', err);
+        setError(err instanceof Error ? err.message : JSON.stringify(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void initializeSelection();
+  }, []);
+
+  async function handleSelectionChange(nextSummary: TunnelSelectionSummary) {
+    try {
+      setError('');
+      setSummary(nextSummary);
+      await saveSelectionSummary(nextSummary);
+      setLastAction('Updated and stored selection summary.');
+    } catch (err) {
+      console.log('saveSelectionSummary error', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    }
+  }
+
+  async function handleClearSelection() {
+    try {
+      setError('');
+      await clearSelectionSummary();
+      setSummary(null);
+      setLastAction('Cleared stored selection summary.');
+    } catch (err) {
+      console.log('clearSelectionSummary error', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    }
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Selection Test</Text>
+
       <Text style={styles.label}>Has selection</Text>
       <Text style={styles.value}>
-        {summary ? String(summary.hasSelection) : 'No selection yet.'}
+        {summary ? String(summary.hasSelection) : 'No stored selection yet.'}
       </Text>
+
       <Text style={styles.label}>Selected apps</Text>
       <Text style={styles.value}>{summary?.applicationCount ?? 0}</Text>
 
+      <Text style={styles.label}>Selected categories</Text>
+      <Text style={styles.value}>{summary?.categoryCount ?? 0}</Text>
+
       <Text style={styles.label}>Selected web domains</Text>
       <Text style={styles.value}>{summary?.webDomainCount ?? 0}</Text>
+
+      <Text style={styles.label}>Last action</Text>
+      <Text style={styles.value}>{lastAction}</Text>
+
+      {loading ? <Text style={styles.info}>Loading stored selection...</Text> : null}
+      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+
+      <View style={styles.buttonGroup}>
+        <Button title="Clear stored selection" onPress={handleClearSelection} />
+      </View>
 
       <View style={styles.pickerContainer}>
         <TunnelFocusControlView
           style={styles.picker}
           onSelectionChange={(event) => {
-            setSummary(event.nativeEvent);
+            void handleSelectionChange(event.nativeEvent);
           }}
         />
       </View>
@@ -49,6 +121,16 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 18,
+    marginBottom: 8,
+  },
+  info: {
+    fontSize: 16,
+  },
+  error: {
+    fontSize: 16,
+  },
+  buttonGroup: {
+    marginTop: 8,
     marginBottom: 8,
   },
   pickerContainer: {
