@@ -2,6 +2,7 @@ import ExpoModulesCore
 import SwiftUI
 import FamilyControls
 
+@available(iOS 16.0, *)
 class TunnelFocusControlView: ExpoView {
   let onSelectionChange = EventDispatcher()
   private let hostingController: UIHostingController<SelectionPickerContainer>

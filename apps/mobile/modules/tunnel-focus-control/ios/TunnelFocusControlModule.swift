@@ -52,10 +52,8 @@ public class TunnelFocusControlModule: Module {
             }
         }
 
-        View(TunnelFocusControlView.self) {
-            Events("onSelectionChange")
-        }
-
-
+            View(TunnelFocusControlView.self) {
+                Events("onSelectionChange")
+            }
     }
 }
