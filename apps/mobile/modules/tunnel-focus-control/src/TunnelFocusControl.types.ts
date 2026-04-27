@@ -1,3 +1,5 @@
+import { ViewProps } from 'react-native';
+
 export type TunnelAuthorizationStatus =
   | 'notDetermined'
   | 'denied'
@@ -6,11 +8,15 @@ export type TunnelAuthorizationStatus =
   | 'unknown'
   | 'unsupported';
 
-export type TunnelFocusControlModuleEvents = {};
-
 export type TunnelSelectionSummary = {
   hasSelection: boolean;
   applicationCount: number;
   categoryCount: number;
   webDomainCount: number;
+};
+
+export type TunnelFocusControlModuleEvents = {};
+
+export type TunnelFocusControlViewProps = ViewProps & {
+  onSelectionChange?: (event: { nativeEvent: TunnelSelectionSummary }) => void;
 };
