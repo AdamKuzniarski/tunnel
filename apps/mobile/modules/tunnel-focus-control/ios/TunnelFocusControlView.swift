@@ -1,38 +1,64 @@
 import ExpoModulesCore
-import WebKit
+import SwiftUI
+import FamilyControls
 
-// This view will be used as a native component. Make sure to inherit from `ExpoView`
-// to apply the proper styling (e.g. border radius and shadows).
 class TunnelFocusControlView: ExpoView {
-  let webView = WKWebView()
-  let onLoad = EventDispatcher()
-  var delegate: WebViewDelegate?
+  let onSelectionChange = EventDispatcher()
+  private let hostingController: UIHostingController<SelectionPickerContainer>
 
   required init(appContext: AppContext? = nil) {
+    self.hostingController = UIHostingController(
+        rootView: SelectionPickerContainer(onSelectionChange: { _ in })
+    )
+
     super.init(appContext: appContext)
+
     clipsToBounds = true
-    delegate = WebViewDelegate { url in
-      self.onLoad(["url": url])
+    backgroundColor = .clear
+
+    hostingController.rootView = SelectionPickerContainer { [weak self] summary in
+      self?.onSelectionChange(summary)
     }
-    webView.navigationDelegate = delegate
-    addSubview(webView)
+
+    if let hostedView = hostingController.view {
+      hostedView.backgroundColor = .clear
+      addSubview(hostedView)
+    }
   }
 
   override func layoutSubviews() {
-    webView.frame = bounds
+    super.layoutSubviews()
+    hostingController.view.frame = bounds
   }
 }
 
-class WebViewDelegate: NSObject, WKNavigationDelegate {
-  let onUrlChange: (String) -> Void
+@available(iOS 16.0, *)
+struct SelectionPickerContainer: View {
+  @State private var selection = FamilyActivitySelection()
+  let onSelectionChange: ([String: Any]) -> Void
 
-  init(onUrlChange: @escaping (String) -> Void) {
-    self.onUrlChange = onUrlChange
+  var body: some View {
+    FamilyActivityPicker(selection: $selection)
+    .onAppear {
+      sendSummary()
+    }
+    .onChange(of: selection) { _ in
+      sendSummary()
+    }
   }
 
-  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation) {
-    if let url = webView.url {
-      onUrlChange(url.absoluteString)
-    }
+  private func sendSummary() {
+    let applicationCount = selection.applicationTokens.count
+    let categoryCount = selection.categoryTokens.count
+    let webDomainCount = selection.webDomainTokens.count
+
+    let summary: [String: Any] = [
+      "hasSelection": applicationCount > 0 || categoryCount > 0 || webDomainCount > 0,
+      "applicationCount": applicationCount,
+      "categoryCount": categoryCount,
+      "webDomainCount": webDomainCount
+    ]
+
+    onSelectionChange(summary)
   }
 }
