@@ -2,7 +2,7 @@ export type TunnelAuthorizationStatus =
   | 'notDetermined'
   | 'denied'
   | 'approved'
-  | 'approverdWithDataAcces'
+  | 'approvedWithDataAccess'
   | 'unknown'
   | 'unsupported';
 
