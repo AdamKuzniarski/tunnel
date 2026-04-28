@@ -1,0 +1,14 @@
+{
+  "indentation": {
+    "spaces": 4
+  },
+  "maximumBlankLines": 2,
+  "lineLength": 99999,
+  "version": 1,
+  "respectsExistingLineBreaks": true,
+  "lineBreakBeforeControlFlowKeywords": false,
+  "lineBreakBeforeEachArgument": false,
+  "indentConditionalCompilationBlocks": false,
+  "indentSwitchCaseLabels": false,
+  "spacesAroundRangeFormationOperators": false
+}

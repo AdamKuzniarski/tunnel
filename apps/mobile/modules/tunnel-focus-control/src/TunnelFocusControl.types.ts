@@ -8,6 +8,8 @@ export type TunnelAuthorizationStatus =
   | 'unknown'
   | 'unsupported';
 
+export type TunnelShieldResult = 'applied' | 'cleared' | 'noSelection' | 'unsupported';
+
 export type TunnelSelectionSummary = {
   hasSelection: boolean;
   applicationCount: number;

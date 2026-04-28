@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 import { TunnelFocusControlView } from '../../modules/tunnel-focus-control';
 import { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
+import { applyShield, clearShield } from '@/services/focusControl';
 import {
   clearSelectionSummary,
   loadSelectionSummary,
@@ -10,6 +11,7 @@ import {
 
 export default function SelectionTestScreen() {
   const [summary, setSummary] = useState<TunnelSelectionSummary | null>(null);
+  const [shieldStatus, setShieldStatus] = useState('No shield action yet.');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lastAction, setLastAction] = useState('No action yet.');
@@ -63,6 +65,28 @@ export default function SelectionTestScreen() {
     }
   }
 
+  async function handleApplyShield() {
+    try {
+      setError('');
+      const result = await applyShield();
+      setShieldStatus(`Apply shield result: ${result}`);
+    } catch (err) {
+      console.log('applyShield error', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    }
+  }
+
+  async function applyClearShield() {
+    try {
+      setError('');
+      const result = await clearShield();
+      setShieldStatus(`Cleared shield result: ${result}`);
+    } catch (err) {
+      console.log('clearShield error', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    }
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Selection Test</Text>
@@ -71,6 +95,17 @@ export default function SelectionTestScreen() {
       <Text style={styles.value}>
         {summary ? String(summary.hasSelection) : 'No stored selection yet.'}
       </Text>
+
+      <Text style={styles.label}>Shield status</Text>
+      <Text style={styles.value}>{shieldStatus}</Text>
+
+      <View style={styles.buttonGroup}>
+        <Button title="Apply shield" onPress={handleApplyShield} />
+      </View>
+
+      <View style={styles.buttonGroup}>
+        <Button title="Clear shield" onPress={() => void applyClearShield()} />
+      </View>
 
       <Text style={styles.label}>Selected apps</Text>
       <Text style={styles.value}>{summary?.applicationCount ?? 0}</Text>
