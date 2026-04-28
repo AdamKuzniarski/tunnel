@@ -58,9 +58,44 @@ export default function FocusSessionScreen() {
 
     void initializeSession();
   }, []);
+
+  useEffect(() => {
+    if (!session || session.status !== 'active') {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [session]);
+
+  useEffect(() => {
+    if (!session || session.status !== 'active') {
+      return;
+    }
+    if (now < session.endsAt) {
+      return;
+    }
+
+    async function finishSession() {
+      try {
+        await clearShield();
+        await clearActiveSession();
+
+        setSession(null);
+        setLastAction('Session finished. Shield cleared.');
+      } catch (err) {
+        console.log('finishSession error', err);
+        setError(err instanceof Error ? err.message : JSON.stringify(err));
+      }
+    }
+    void finishSession();
+  }, [now, session]);
 }
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 24,
@@ -96,4 +131,4 @@ const styles = {
   actionButton: {
     marginTop: 8,
   },
-};
+});
