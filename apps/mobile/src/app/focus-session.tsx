@@ -12,6 +12,52 @@ const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
 
 export default function FocusSessionScreen() {
   const [selectedDuration, setSelectedDuration] = useState<FocusSessionDurationMinutes>(30);
+  const [session, setSession] = useState<FocusSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastAction, setLastAction] = useState('No action yet.');
+  const [error, setError] = useState('');
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const storedSession = await loadActiveSession();
+
+        if (!storedSession) {
+          setLastAction('No active session found');
+          return;
+        }
+        if (storedSession.status === 'active') {
+          setSession(null);
+          await clearActiveSession();
+          setLastAction('Stored session was not active and was cleared.');
+          return;
+        }
+
+        if (Date.now() >= storedSession.endsAt) {
+          await clearShield();
+          await loadActiveSession();
+          setSession(null);
+          setLastAction('Stored session hat already ended. Shield cleared.');
+          return;
+        }
+
+        setSession(storedSession);
+        setSelectedDuration(storedSession.durationMinutes);
+        setLastAction('Restored active session from storage.');
+      } catch (err) {
+        console.log('InitializeSession error', err);
+        setError(err instanceof Error ? err.message : JSON.stringify(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void initializeSession();
+  }, []);
 }
 
 const styles = {
