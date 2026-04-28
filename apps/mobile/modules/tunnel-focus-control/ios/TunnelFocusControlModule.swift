@@ -23,6 +23,10 @@ public class TunnelFocusControlModule: Module {
         }
     }
 
+    private let managedSettingsStore = ManagedSettingsStore(
+        named: ManagedSettingsStore.Name("tunnel")
+    )
+
     @available(iOS 16.0, *)
     private func requestAuthorizationInternal() async throws -> String {
         try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
@@ -53,12 +57,41 @@ public class TunnelFocusControlModule: Module {
             }
         }
 
-            View(TunnelFocusControlView.self) {
-                Events("onSelectionChange")
-            }
-    }
+        View(TunnelFocusControlView.self) {
+            Events("onSelectionChange")
+        }
 
-    private let managedSettingsStore = ManagedSettingsStore(
-        named: ManagedSettingsStore.Name("tunnel")
-    )
+        AsyncFunction("applyShield") { () -> String in
+            guard #available(iOS 16.0, *) else {
+                return "unsupported"
+            }
+
+            let selection = TunnelSelectionStore.shared.selection
+            let hasSelection = !selection.applicationTokens.isEmpty || !selection.categoryTokens.isEmpty || !selection.webDomainTokens.isEmpty
+
+            guard hasSelection else {
+                managedSettingsStore.clearAllSettings()
+                return "noSelection"
+            }
+
+            self.managedSettingsStore.shield.applications =
+        selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
+
+            self.managedSettingsStore.shield.webDomainCategories =
+        selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+
+            self.managedSettingsStore.shield.applicationCategories =
+        selection.applicationCategories.isEmpty ? nil: .specific(selection.categoryTokens, except: [])
+
+            self.managedSettingsStore.shield.webDomainCategories =
+        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+
+            return "applied"
+        }
+
+        AsyncFunction("clearShield") { () -> String in
+            self.managedSettingsStore.clearAllSettings()
+            return "cleared"
+        }
+    }
 }

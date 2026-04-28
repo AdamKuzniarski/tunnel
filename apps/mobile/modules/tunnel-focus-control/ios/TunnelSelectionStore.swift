@@ -1,9 +1,9 @@
 import FamilyControls
 
-final class TunnelSelectionStore{
+final class TunnelSelectionStore {
     static let shared = TunnelSelectionStore()
 
     var selection = FamilyActivitySelection()
 
-    private init(){}
+    private init() {}
 }
