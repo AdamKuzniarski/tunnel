@@ -62,4 +62,21 @@ struct SelectionPickerContainer: View {
 
     onSelectionChange(summary)
   }
+
+  private func sendSummary(){
+    TunnelSelectionStore.shared.selection = selection
+
+    let applicationCount = selection.applicationTokens.count
+    let categoryCount = selection.categoryTokens.count
+    let webDomainCount = selection.webDomainTokens.count
+
+    let summary: [String: Any] = [
+      "hasSelection": applicationCount > 0 || categoryCount > 0 || webDomainCount > 0,
+      "applicationCount": applicationCount,
+      "categoryCount": categoryCount,
+      "webDomainCount": webDomainCount
+    ]
+
+    onSelectionChange(summary)
+  }
 }

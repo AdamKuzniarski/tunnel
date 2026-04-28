@@ -1,5 +1,6 @@
 import ExpoModulesCore
 import FamilyControls
+import ManagedSettings
 
 public class TunnelFocusControlModule: Module {
     @available(iOS 16.0, *)
@@ -56,4 +57,8 @@ public class TunnelFocusControlModule: Module {
                 Events("onSelectionChange")
             }
     }
+
+    private let managedSettingsStore = ManagedSettingsStore(
+        named: ManagedSettingsStore.Name("tunnel")
+    )
 }
