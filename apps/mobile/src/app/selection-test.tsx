@@ -122,6 +122,17 @@ export default function SelectionTestScreen() {
             void handleSelectionChange(event.nativeEvent);
           }}
         />
+
+        <Text style={styles.label}>Shield status</Text>
+        <Text style={styles.value}>{shieldStatus}</Text>
+
+        <View style={styles.buttonGroup}>
+          <Button title="Apply shield" onPress={handleApplyShield} />
+        </View>
+
+        <View style={styles.buttonGroup}>
+          <Button title="Clear shield" onPress={clearShield} />
+        </View>
       </View>
     </View>
   );
