@@ -96,6 +96,17 @@ export default function SelectionTestScreen() {
         {summary ? String(summary.hasSelection) : 'No stored selection yet.'}
       </Text>
 
+      <Text style={styles.label}>Shield status</Text>
+      <Text style={styles.value}>{shieldStatus}</Text>
+
+      <View style={styles.buttonGroup}>
+        <Button title="Apply shield" onPress={handleApplyShield} />
+      </View>
+
+      <View style={styles.buttonGroup}>
+        <Button title="Clear shield" onPress={clearShield} />
+      </View>
+
       <Text style={styles.label}>Selected apps</Text>
       <Text style={styles.value}>{summary?.applicationCount ?? 0}</Text>
 
@@ -122,17 +133,6 @@ export default function SelectionTestScreen() {
             void handleSelectionChange(event.nativeEvent);
           }}
         />
-
-        <Text style={styles.label}>Shield status</Text>
-        <Text style={styles.value}>{shieldStatus}</Text>
-
-        <View style={styles.buttonGroup}>
-          <Button title="Apply shield" onPress={handleApplyShield} />
-        </View>
-
-        <View style={styles.buttonGroup}>
-          <Button title="Clear shield" onPress={clearShield} />
-        </View>
       </View>
     </View>
   );

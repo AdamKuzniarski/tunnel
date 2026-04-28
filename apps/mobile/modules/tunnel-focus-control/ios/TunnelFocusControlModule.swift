@@ -4,34 +4,11 @@ import ManagedSettings
 
 public class TunnelFocusControlModule: Module {
     @available(iOS 16.0, *)
-    private func authorizationStatusString() async -> String {
-        let status = await MainActor.run {
-            AuthorizationCenter.shared.authorizationStatus
-        }
-
-        switch status {
-        case .notDetermined:
-            return "notDetermined"
-        case .denied:
-            return "denied"
-        case .approved:
-            return "approved"
-        case .approvedWithDataAccess:
-            return "approvedWithDataAccess"
-        @unknown default:
-            return "unknown"
-        }
-    }
+    static var currentSelection = FamilyActivitySelection()
 
     private let managedSettingsStore = ManagedSettingsStore(
         named: ManagedSettingsStore.Name("tunnel")
     )
-
-    @available(iOS 16.0, *)
-    private func requestAuthorizationInternal() async throws -> String {
-        try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
-        return await authorizationStatusString()
-    }
 
     public func definition() -> ModuleDefinition {
         Name("TunnelFocusControl")
@@ -41,7 +18,7 @@ public class TunnelFocusControlModule: Module {
                 return "unsupported"
             }
 
-            return await self.authorizationStatusString()
+            return await self.currentAuthorizationStatus()
         }
 
         AsyncFunction("requestAuthorization") { () async throws -> String in
@@ -49,12 +26,7 @@ public class TunnelFocusControlModule: Module {
                 return "unsupported"
             }
 
-            do {
-                return try await self.requestAuthorizationInternal()
-            } catch {
-                print("FamilyControls requestAuthorization error: \(error)")
-                throw error
-            }
+            return try await self.requestAuthorization()
         }
 
         View(TunnelFocusControlView.self) {
@@ -66,32 +38,77 @@ public class TunnelFocusControlModule: Module {
                 return "unsupported"
             }
 
-            let selection = TunnelSelectionStore.shared.selection
-            let hasSelection = !selection.applicationTokens.isEmpty || !selection.categoryTokens.isEmpty || !selection.webDomainTokens.isEmpty
-
-            guard hasSelection else {
-                managedSettingsStore.clearAllSettings()
-                return "noSelection"
-            }
-
-            self.managedSettingsStore.shield.applications =
-        selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
-
-            self.managedSettingsStore.shield.webDomainCategories =
-        selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
-
-            self.managedSettingsStore.shield.applicationCategories =
-        selection.applicationCategories.isEmpty ? nil: .specific(selection.categoryTokens, except: [])
-
-            self.managedSettingsStore.shield.webDomainCategories =
-        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
-
-            return "applied"
+            return self.applyShield()
         }
 
         AsyncFunction("clearShield") { () -> String in
             self.managedSettingsStore.clearAllSettings()
             return "cleared"
+        }
+    }
+}
+
+@available(iOS 16.0, *)
+private extension TunnelFocusControlModule {
+    func currentAuthorizationStatus() async -> String {
+        let status = await MainActor.run {
+            AuthorizationCenter.shared.authorizationStatus
+        }
+
+        return mapAuthorizationStatus(status)
+    }
+
+    func requestAuthorization() async throws -> String {
+        do {
+            try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
+            return await currentAuthorizationStatus()
+        } catch {
+            print("FamilyControls requestAuthorization error: \(error)")
+            throw error
+        }
+    }
+
+    func applyShield() -> String {
+        let selection = TunnelFocusControlModule.currentSelection
+
+        guard hasSelection(selection) else {
+            managedSettingsStore.clearAllSettings()
+            return "noSelection"
+        }
+
+        managedSettingsStore.shield.applications =
+        selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
+
+        managedSettingsStore.shield.webDomains =
+        selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+
+        managedSettingsStore.shield.applicationCategories =
+        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+
+        managedSettingsStore.shield.webDomainCategories =
+        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+
+        return "applied"
+    }
+
+    func hasSelection(_ selection: FamilyActivitySelection) -> Bool {
+        !selection.applicationTokens.isEmpty ||
+        !selection.categoryTokens.isEmpty ||
+        !selection.webDomainTokens.isEmpty
+    }
+
+    func mapAuthorizationStatus(_ status: AuthorizationStatus) -> String {
+        switch status {
+        case .notDetermined:
+            return "notDetermined"
+        case .denied:
+            return "denied"
+        case .approved:
+            return "approved"
+        case .approvedWithDataAccess:
+            return "approvedWithDataAccess"
+        @unknown default:
+            return "unknown"
         }
     }
 }
