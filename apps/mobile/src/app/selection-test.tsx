@@ -104,7 +104,7 @@ export default function SelectionTestScreen() {
       </View>
 
       <View style={styles.buttonGroup}>
-        <Button title="Clear shield" onPress={clearShield} />
+        <Button title="Clear shield" onPress={() => void applyClearShield()} />
       </View>
 
       <Text style={styles.label}>Selected apps</Text>
