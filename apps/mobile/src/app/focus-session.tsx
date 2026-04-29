@@ -30,7 +30,7 @@ export default function FocusSessionScreen() {
           setLastAction('No active session found');
           return;
         }
-        if (storedSession.status === 'active') {
+        if (storedSession.status !== 'active') {
           setSession(null);
           await clearActiveSession();
           setLastAction('Stored session was not active and was cleared.');
@@ -39,9 +39,9 @@ export default function FocusSessionScreen() {
 
         if (Date.now() >= storedSession.endsAt) {
           await clearShield();
-          await loadActiveSession();
+          await clearActiveSession();
           setSession(null);
-          setLastAction('Stored session hat already ended. Shield cleared.');
+          setLastAction('Stored session already ended. Shield cleared.');
           return;
         }
 
