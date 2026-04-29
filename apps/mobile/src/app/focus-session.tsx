@@ -141,6 +141,24 @@ export default function FocusSessionScreen() {
       setLoading(false);
     }
   }
+
+  async function handleStopSession() {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await clearShield();
+      await clearActiveSession();
+      setSession(null);
+      setLastAction(`Stopped session. Clear shield result: ${result}`);
+    } catch (err) {
+      console.log('handleStopSession error', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const isSessionActive = session?.status === 'active';
 }
 
 const styles = StyleSheet.create({
