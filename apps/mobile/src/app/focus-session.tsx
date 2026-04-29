@@ -159,6 +159,55 @@ export default function FocusSessionScreen() {
   }
 
   const isSessionActive = session?.status === 'active';
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Focus Session</Text>
+
+      <Text style={styles.label}>Selected duration</Text>
+      <View style={styles.buttonRow}>
+        {DURATION_OPTIONS.map((duration) => (
+          <View key={duration} style={styles.durationButton}>
+            <Button
+              title={`${duration} min`}
+              onPress={() => setSelectedDuration(duration)}
+              disabled={isSessionActive || loading}
+            />
+          </View>
+        ))}
+      </View>
+
+      <Text style={styles.label}>Current state</Text>
+      <Text style={styles.value}>
+        {isSessionActive ? 'Active session running' : 'No active session'}
+      </Text>
+
+      <Text style={styles.label}>Countdown</Text>
+      <Text style={styles.value}>{isSessionActive ? remainingText : '--:--'}</Text>
+
+      <Text style={styles.label}>Last action</Text>
+      <Text style={styles.value}>{lastAction}</Text>
+
+      {loading ? <Text style={styles.info}>Working...</Text> : null}
+      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+
+      <View style={styles.actionButton}>
+        <Button
+          title="Start session"
+          onPress={handleStartSession}
+          disabled={isSessionActive || loading}
+        />
+      </View>
+
+      <View style={styles.actionButton}>
+        <Button
+          title="Stop session"
+          onPress={handleStopSession}
+          disabled={!isSessionActive || loading}
+        />
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
