@@ -108,6 +108,32 @@ export default function FocusSessionScreen() {
     void finishSession();
   }, [now, session]);
 
+  useEffect(() => {
+    if (unlockStep !== 'countdown' || unlockCountdown !== 0) {
+      return;
+    }
+
+    async function performEmergencyUnlock() {
+      try {
+        setLoading(true);
+        setError('');
+
+        const result = await clearShield();
+        await clearActiveSession();
+
+        setSession(null);
+        resetUnlockFlow();
+        setLastAction(`Emergency unlock performed. Clear shield result: ${result}`);
+      } catch (err) {
+        console.log('performEmergencyUnlock error', err);
+        setError(err instanceof Error ? err.message : JSON.stringify(err));
+      } finally {
+        setLoading(false);
+      }
+    }
+    void performEmergencyUnlock();
+  }, [unlockStep, unlockCountdown]);
+
   const remainingMs = useMemo(() => {
     if (!session || session.status !== 'active') {
       return 0;
@@ -234,14 +260,54 @@ export default function FocusSessionScreen() {
           disabled={isSessionActive || loading}
         />
       </View>
+      {isSessionActive ? (
+        <View style={styles.actionButton}>
+          {unlockStep === 'idle' ? (
+            <Button
+              title="Emergency unlock"
+              onPress={handleArmEmergencyUnlock}
+              disabled={loading}
+            />
+          ) : null}
 
-      <View style={styles.actionButton}>
-        <Button
-          title="Stop session"
-          onPress={handleStopSession}
-          disabled={!isSessionActive || loading}
-        />
-      </View>
+          {unlockStep === 'armed' ? (
+            <View style={styles.unlockPanel}>
+              <Text style={styles.warningText}>
+                Emergency unlock will clear the shield and end the session.
+              </Text>
+
+              <View style={styles.actionButton}>
+                <Button
+                  title="Start 10-second unlock delay"
+                  onPress={handleStartEmergencyUnlockCountdown}
+                  disabled={loading}
+                />
+              </View>
+
+              <View style={styles.actionButton}>
+                <Button title="Cancel" onPress={handleCancelEmergencyUnlock} disabled={loading} />
+              </View>
+            </View>
+          ) : null}
+
+          {unlockStep === 'countdown' ? (
+            <View style={styles.unlockPanel}>
+              <Text style={styles.warningText}>
+                Emergency unlock in {unlockCountdown} second
+                {unlockCountdown === 1 ? '' : 's'}...
+              </Text>
+
+              <View style={styles.actionButton}>
+                <Button
+                  title="Cancel unlock"
+                  onPress={handleCancelEmergencyUnlock}
+                  disabled={loading}
+                />
+              </View>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -281,5 +347,12 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginTop: 8,
+  },
+  unlockPanel: {
+    marginTop: 12,
+    gap: 8,
+  },
+  warningText: {
+    fontSize: 16,
   },
 });
