@@ -81,6 +81,18 @@ export default function FocusSessionScreen() {
       return;
     }
 
+    useEffect(() => {
+      if (unlockStep !== 'countdown' || unlockCountdown <= 0) {
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        setUnlockCountdown((prev) => prev - 1);
+      }, 1000);
+
+      return () => clearTimeout(timeout);
+    }, [unlockStep, unlockCountdown]);
+
     async function finishSession() {
       try {
         await clearShield();
