@@ -7,7 +7,7 @@ import {
   clearSelectionSummary,
   loadSelectionSummary,
   saveSelectionSummary,
-} from '@/services/selectionStorage';
+} from '../services/sessionStorage';
 
 export default function SelectionTestScreen() {
   const [summary, setSummary] = useState<TunnelSelectionSummary | null>(null);
