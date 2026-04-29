@@ -93,6 +93,22 @@ export default function FocusSessionScreen() {
     }
     void finishSession();
   }, [now, session]);
+
+  const remainingMs = useMemo(() => {
+    if (!session || session.status !== 'active') {
+      return 0;
+    }
+
+    return Math.max(session.endsAt - now, 0);
+  }, [now, session]);
+
+  const remainingText = useMemo(() => {
+    const totalSeconds = Math.floor(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+
+    return `${String(minutes).padStart(2, '0')}${String(seconds).padStart(2, '0')}`;
+  }, [remainingMs]);
 }
 
 const styles = StyleSheet.create({
