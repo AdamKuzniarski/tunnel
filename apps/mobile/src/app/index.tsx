@@ -23,6 +23,9 @@ export default function HomeScreen() {
         <Link href="/selection-test" style={styles.link}>
           Go to Selection Test
         </Link>
+        <Link href="/focus-session" style={styles.link}>
+          Go to Focus Session
+        </Link>
       </View>
     </View>
   );
