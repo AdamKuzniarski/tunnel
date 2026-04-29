@@ -5,7 +5,7 @@ import {
   clearActiveSession,
   loadActiveSession,
   saveActiveSession,
-} from '@/services/selectionStorage';
+} from '@/services/sessionStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 
 const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
@@ -18,7 +18,32 @@ export default function FocusSessionScreen() {
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
   const [unlockStep, setUnlockStep] = useState<'idle' | 'armed' | 'countdown'>('idle');
-  const [unlockCountdown, setUnlockCountdown] = useState<number>(0);
+  const [unlockCountdown, setUnlockCountdown] = useState(0);
+
+  const isSessionActive = session?.status === 'active';
+
+  function resetUnlockFlow() {
+    setUnlockStep('idle');
+    setUnlockCountdown(0);
+  }
+
+  function handleArmEmergencyUnlock() {
+    setError('');
+    setUnlockStep('armed');
+    setLastAction('Emergency unlock armed. Confirm to start the delay.');
+  }
+
+  function handleStartEmergencyUnlockCountdown() {
+    setError('');
+    setUnlockStep('countdown');
+    setUnlockCountdown(10);
+    setLastAction('Emergency unlock countdown started.');
+  }
+
+  function handleCancelEmergencyUnlock() {
+    resetUnlockFlow();
+    setLastAction('Emergency unlock cancelled.');
+  }
 
   useEffect(() => {
     const initializeSession = async () => {
@@ -29,9 +54,10 @@ export default function FocusSessionScreen() {
         const storedSession = await loadActiveSession();
 
         if (!storedSession) {
-          setLastAction('No active session found');
+          setLastAction('No active session found.');
           return;
         }
+
         if (storedSession.status !== 'active') {
           setSession(null);
           await clearActiveSession();
@@ -43,7 +69,8 @@ export default function FocusSessionScreen() {
           await clearShield();
           await clearActiveSession();
           setSession(null);
-          setLastAction('Stored session already ended. Shield cleared.');
+          resetUnlockFlow();
+          setLastAction('Stored session had already ended. Shield cleared.');
           return;
         }
 
@@ -51,7 +78,7 @@ export default function FocusSessionScreen() {
         setSelectedDuration(storedSession.durationMinutes);
         setLastAction('Restored active session from storage.');
       } catch (err) {
-        console.log('InitializeSession error', err);
+        console.log('initializeSession error', err);
         setError(err instanceof Error ? err.message : JSON.stringify(err));
       } finally {
         setLoading(false);
@@ -77,43 +104,45 @@ export default function FocusSessionScreen() {
     if (!session || session.status !== 'active') {
       return;
     }
+
     if (now < session.endsAt) {
       return;
     }
 
-    useEffect(() => {
-      if (unlockStep !== 'countdown' || unlockCountdown <= 0) {
-        return;
-      }
-
-      const timeout = setTimeout(() => {
-        setUnlockCountdown((prev) => prev - 1);
-      }, 1000);
-
-      return () => clearTimeout(timeout);
-    }, [unlockStep, unlockCountdown]);
-
-    async function finishSession() {
+    const finishSession = async () => {
       try {
         await clearShield();
         await clearActiveSession();
-
         setSession(null);
+        resetUnlockFlow();
         setLastAction('Session finished. Shield cleared.');
       } catch (err) {
         console.log('finishSession error', err);
         setError(err instanceof Error ? err.message : JSON.stringify(err));
       }
-    }
+    };
+
     void finishSession();
   }, [now, session]);
+
+  useEffect(() => {
+    if (unlockStep !== 'countdown' || unlockCountdown <= 0) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setUnlockCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [unlockStep, unlockCountdown]);
 
   useEffect(() => {
     if (unlockStep !== 'countdown' || unlockCountdown !== 0) {
       return;
     }
 
-    async function performEmergencyUnlock() {
+    const performEmergencyUnlock = async () => {
       try {
         setLoading(true);
         setError('');
@@ -130,7 +159,8 @@ export default function FocusSessionScreen() {
       } finally {
         setLoading(false);
       }
-    }
+    };
+
     void performEmergencyUnlock();
   }, [unlockStep, unlockCountdown]);
 
@@ -145,15 +175,16 @@ export default function FocusSessionScreen() {
   const remainingText = useMemo(() => {
     const totalSeconds = Math.floor(remainingMs / 1000);
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = Math.floor(totalSeconds % 60);
+    const seconds = totalSeconds % 60;
 
-    return `${String(minutes).padStart(2, '0')}${String(seconds).padStart(2, '0')}`;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }, [remainingMs]);
 
   async function handleStartSession() {
     try {
       setLoading(true);
       setError('');
+      resetUnlockFlow();
 
       const shieldResult = await applyShield();
 
@@ -161,6 +192,7 @@ export default function FocusSessionScreen() {
         setLastAction(`Shield result: ${shieldResult}`);
         return;
       }
+
       const startedAt = Date.now();
       const nextSession: FocusSession = {
         id: String(startedAt),
@@ -182,46 +214,6 @@ export default function FocusSessionScreen() {
     }
   }
 
-  async function handleStopSession() {
-    try {
-      setLoading(true);
-      setError('');
-      const result = await clearShield();
-      await clearActiveSession();
-      setSession(null);
-      setLastAction(`Stopped session. Clear shield result: ${result}`);
-    } catch (err) {
-      console.log('handleStopSession error', err);
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const isSessionActive = session?.status === 'active';
-
-  function resetUnlockFlow() {
-    setUnlockStep('idle');
-    setUnlockCountdown(0);
-  }
-
-  function handleArmEmergencyUnlock() {
-    setError('');
-    setUnlockStep('armed');
-    setLastAction('Emergency unlock armed. Confirm to start the delay.');
-  }
-
-  function handleStartEmergencyUnlockCountdown() {
-    setError('');
-    setUnlockStep('countdown');
-    setUnlockCountdown(10);
-    setLastAction('Energency unlock countdown started.');
-  }
-
-  function handleCancelEmergencyUnlock() {
-    resetUnlockFlow();
-    setLastAction('Emergency unlock cancelled.');
-  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Focus Session</Text>
@@ -260,6 +252,7 @@ export default function FocusSessionScreen() {
           disabled={isSessionActive || loading}
         />
       </View>
+
       {isSessionActive ? (
         <View style={styles.actionButton}>
           {unlockStep === 'idle' ? (
