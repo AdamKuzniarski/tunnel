@@ -7,6 +7,7 @@ import {
   saveActiveSession,
 } from '@/services/sessionStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
+import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 
 const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
 
@@ -113,6 +114,17 @@ export default function FocusSessionScreen() {
       try {
         await clearShield();
         await clearActiveSession();
+
+        if (session) {
+          await appendSessionHistoryEntry({
+            id: `${session.id}-completed`,
+            startedAt: session.startedAt,
+            endedAt: Date.now(),
+            durationMinutes: session.durationMinutes,
+            outcome: 'completed',
+          });
+        }
+
         setSession(null);
         resetUnlockFlow();
         setLastAction('Session finished. Shield cleared.');
@@ -142,10 +154,20 @@ export default function FocusSessionScreen() {
       return;
     }
 
-    const performEmergencyUnlock = async () => {
+    async function performEmergencyUnlock() {
       try {
         setLoading(true);
         setError('');
+
+        if (session) {
+          await appendSessionHistoryEntry({
+            id: `${session.id}-emergency-unlock`,
+            startedAt: session.startedAt,
+            endedAt: Date.now(),
+            durationMinutes: session.durationMinutes,
+            outcome: 'emergency_unlock',
+          });
+        }
 
         const result = await clearShield();
         await clearActiveSession();
@@ -159,7 +181,7 @@ export default function FocusSessionScreen() {
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     void performEmergencyUnlock();
   }, [unlockStep, unlockCountdown]);
