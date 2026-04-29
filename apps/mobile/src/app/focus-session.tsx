@@ -17,6 +17,8 @@ export default function FocusSessionScreen() {
   const [lastAction, setLastAction] = useState('No action yet.');
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [unlockStep, setUnlockStep] = useState<'idle' | 'armed' | 'countdown'>('idle');
+  const [unlockCountdown, setUnlockCountdown] = useState<number>(0);
 
   useEffect(() => {
     const initializeSession = async () => {
@@ -160,6 +162,28 @@ export default function FocusSessionScreen() {
 
   const isSessionActive = session?.status === 'active';
 
+  function resetUnlockFlow() {
+    setUnlockStep('idle');
+    setUnlockCountdown(0);
+  }
+
+  function handleArmEmergencyUnlock() {
+    setError('');
+    setUnlockStep('armed');
+    setLastAction('Emergency unlock armed. Confirm to start the delay.');
+  }
+
+  function handleStartEmergencyUnlockCountdown() {
+    setError('');
+    setUnlockStep('countdown');
+    setUnlockCountdown(10);
+    setLastAction('Energency unlock countdown started.');
+  }
+
+  function handleCancelEmergencyUnlock() {
+    resetUnlockFlow();
+    setLastAction('Emergency unlock cancelled.');
+  }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Focus Session</Text>
