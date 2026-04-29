@@ -109,6 +109,38 @@ export default function FocusSessionScreen() {
 
     return `${String(minutes).padStart(2, '0')}${String(seconds).padStart(2, '0')}`;
   }, [remainingMs]);
+
+  async function handleStartSession() {
+    try {
+      setLoading(true);
+      setError('');
+
+      const shieldResult = await applyShield();
+
+      if (shieldResult !== 'applied') {
+        setLastAction(`Shield result: ${shieldResult}`);
+        return;
+      }
+      const startedAt = Date.now();
+      const nextSession: FocusSession = {
+        id: String(startedAt),
+        durationMinutes: selectedDuration,
+        startedAt,
+        endsAt: startedAt + selectedDuration * 60 * 1000,
+        status: 'active',
+      };
+
+      await saveActiveSession(nextSession);
+      setSession(nextSession);
+      setNow(Date.now());
+      setLastAction(`Started ${selectedDuration} minute session.`);
+    } catch (err) {
+      console.log('handleStartSession error', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    } finally {
+      setLoading(false);
+    }
+  }
 }
 
 const styles = StyleSheet.create({
