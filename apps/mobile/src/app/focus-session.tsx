@@ -166,6 +166,8 @@ export default function FocusSessionScreen() {
       return;
     }
 
+    const activeSession = session;
+
     async function performEmergencyUnlock() {
       try {
         setLoading(true);
@@ -174,10 +176,10 @@ export default function FocusSessionScreen() {
         const result = await clearShield();
         await clearActiveSession();
         await appendSessionHistoryEntry({
-          id: `${session.id}-emergency-unlock`,
-          startedAt: session.startedAt,
+          id: `${activeSession.id}-emergency-unlock`,
+          startedAt: activeSession.startedAt,
           endedAt: Date.now(),
-          durationMinutes: session.durationMinutes,
+          durationMinutes: activeSession.durationMinutes,
           outcome: 'emergency_unlock',
         });
 
