@@ -26,6 +26,9 @@ export default function HomeScreen() {
         <Link href="/focus-session" style={styles.link}>
           Go to Focus Session
         </Link>
+        <Link href="/history" style={styles.link}>
+          Go to History
+        </Link>
       </View>
     </View>
   );

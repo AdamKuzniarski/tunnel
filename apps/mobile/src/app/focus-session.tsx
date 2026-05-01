@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, StyleSheet, Text, View } from 'react-native';
 import { applyShield, clearShield } from '@/services/focusControl';
 import {
@@ -7,6 +7,7 @@ import {
   saveActiveSession,
 } from '@/services/sessionStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
+import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 
 const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
 
@@ -19,6 +20,7 @@ export default function FocusSessionScreen() {
   const [now, setNow] = useState(Date.now());
   const [unlockStep, setUnlockStep] = useState<'idle' | 'armed' | 'countdown'>('idle');
   const [unlockCountdown, setUnlockCountdown] = useState(0);
+  const isFinishingSessionRef = useRef(false);
 
   const isSessionActive = session?.status === 'active';
 
@@ -109,16 +111,34 @@ export default function FocusSessionScreen() {
       return;
     }
 
+    if (isFinishingSessionRef.current) {
+      return;
+    }
+
+    isFinishingSessionRef.current = true;
+    const sessionToFinish = session;
+
     const finishSession = async () => {
       try {
         await clearShield();
         await clearActiveSession();
+
+        await appendSessionHistoryEntry({
+          id: `${sessionToFinish.id}-completed`,
+          startedAt: sessionToFinish.startedAt,
+          endedAt: Date.now(),
+          durationMinutes: sessionToFinish.durationMinutes,
+          outcome: 'completed',
+        });
+
         setSession(null);
         resetUnlockFlow();
         setLastAction('Session finished. Shield cleared.');
       } catch (err) {
         console.log('finishSession error', err);
         setError(err instanceof Error ? err.message : JSON.stringify(err));
+      } finally {
+        isFinishingSessionRef.current = false;
       }
     };
 
@@ -142,13 +162,26 @@ export default function FocusSessionScreen() {
       return;
     }
 
-    const performEmergencyUnlock = async () => {
+    if (!session || session.status !== 'active') {
+      return;
+    }
+
+    const activeSession = session;
+
+    async function performEmergencyUnlock() {
       try {
         setLoading(true);
         setError('');
 
         const result = await clearShield();
         await clearActiveSession();
+        await appendSessionHistoryEntry({
+          id: `${activeSession.id}-emergency-unlock`,
+          startedAt: activeSession.startedAt,
+          endedAt: Date.now(),
+          durationMinutes: activeSession.durationMinutes,
+          outcome: 'emergency_unlock',
+        });
 
         setSession(null);
         resetUnlockFlow();
@@ -159,10 +192,10 @@ export default function FocusSessionScreen() {
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     void performEmergencyUnlock();
-  }, [unlockStep, unlockCountdown]);
+  }, [session, unlockStep, unlockCountdown]);
 
   const remainingMs = useMemo(() => {
     if (!session || session.status !== 'active') {
