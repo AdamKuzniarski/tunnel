@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Button, StyleSheet, Text, View } from 'react-native';
 import { applyShield, clearShield } from '@/services/focusControl';
 import {
   clearActiveSession,
@@ -8,9 +8,48 @@ import {
 } from '@/services/sessionStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
+import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
+import { colors, radius, spacing, typography } from '@/theme';
 
 const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
 
+type ActionButtonProps = {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  variant?: 'primary' | 'secondary' | 'danger';
+};
+
+function ActionButton({
+  label,
+  onPress,
+  disabled = false,
+  variant = 'primary',
+}: ActionButtonProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.actionButtonBase,
+        variant === 'primary' && styles.actionButtonPrimary,
+        variant === 'secondary' && styles.actionButtonSecondary,
+        variant === 'danger' && styles.actionButtonDanger,
+        disabled && styles.actionButtonDisabled,
+        pressed && !disabled && styles.actionButtonPressed,
+      ]}
+    >
+      <Text
+        style={[
+          styles.actionButtonText,
+          variant === 'secondary' && styles.actionButtonTextSecondary,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 export default function FocusSessionScreen() {
   const [selectedDuration, setSelectedDuration] = useState<FocusSessionDurationMinutes>(30);
   const [session, setSession] = useState<FocusSession | null>(null);
@@ -341,44 +380,209 @@ export default function FocusSessionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    gap: 12,
+    backgroundColor: colors.background,
+  },
+  content: {
+    padding: spacing.xl,
+    gap: spacing.lg,
+    paddingBottom: spacing['3xl'],
+  },
+  hero: {
+    marginTop: spacing['2xl'],
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
+  heroCopy: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  eyebrow: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   title: {
+    color: colors.foreground,
+    fontSize: typography.title,
+    fontWeight: '700',
+  },
+  subtitle: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+  },
+  statusBadge: {
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  statusBadgeActive: {
+    backgroundColor: colors.surface,
+    borderColor: colors.success,
+  },
+  statusBadgeIdle: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+  },
+  statusBadgeText: {
+    fontSize: typography.label,
+    fontWeight: '700',
+  },
+  statusBadgeTextActive: {
+    color: colors.success,
+  },
+  statusBadgeTextIdle: {
+    color: colors.muted,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  cardLabel: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  countdownText: {
+    color: colors.foreground,
+    fontSize: 56,
+    fontWeight: '700',
+    letterSpacing: -2,
+  },
+  cardHint: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+  },
+  durationRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    flexWrap: 'wrap',
+  },
+  durationChip: {
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  durationChipSelected: {
+    borderColor: colors.foreground,
+  },
+  durationChipDisabled: {
+    opacity: 0.5,
+  },
+  durationChipPressed: {
+    opacity: 0.8,
+  },
+  durationChipText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    fontWeight: '600',
+  },
+  durationChipTextSelected: {
+    color: colors.foreground,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  metricValue: {
+    color: colors.foreground,
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 12,
   },
-  label: {
-    fontSize: 14,
+  metricLabel: {
+    color: colors.muted,
+    fontSize: typography.label,
     fontWeight: '600',
-    opacity: 0.7,
   },
-  value: {
-    fontSize: 18,
-    marginBottom: 8,
+  statusText: {
+    color: colors.foreground,
+    fontSize: typography.body,
+    lineHeight: 24,
   },
-  info: {
-    fontSize: 16,
+  infoText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
   },
-  error: {
-    fontSize: 16,
+  errorText: {
+    color: colors.danger,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
   },
-  buttonRow: {
-    marginBottom: 8,
+  actionsSection: {
+    gap: spacing.md,
   },
-  durationButton: {
-    marginBottom: 8,
+  actionButtonBase: {
+    borderRadius: radius.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
   },
-  actionButton: {
-    marginTop: 8,
+  actionButtonPrimary: {
+    backgroundColor: colors.foreground,
+    borderColor: colors.foreground,
   },
-  unlockPanel: {
-    marginTop: 12,
-    gap: 8,
+  actionButtonSecondary: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
   },
-  warningText: {
-    fontSize: 16,
+  actionButtonDanger: {
+    backgroundColor: colors.surface,
+    borderColor: colors.danger,
+  },
+  actionButtonDisabled: {
+    opacity: 0.45,
+  },
+  actionButtonPressed: {
+    opacity: 0.8,
+  },
+  actionButtonText: {
+    color: colors.background,
+    fontSize: typography.body,
+    fontWeight: '700',
+  },
+  actionButtonTextSecondary: {
+    color: colors.foreground,
+  },
+  warningCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.md,
+  },
+  warningTitle: {
+    color: colors.foreground,
+    fontSize: typography.sectionTitle,
+    fontWeight: '600',
+  },
+  warningBody: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
   },
 });
