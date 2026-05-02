@@ -6,34 +6,44 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
-        <Text style={styles.title}>tunnel</Text>
-        <Text style={styles.subtitle}>Block the noise. Stay in flow.</Text>
+        <Text style={styles.brand}>tunnel</Text>
+        <Text style={styles.tagline}>Block the noise. Stay in flow.</Text>
       </View>
       <View style={styles.card}>
-        <Text>Today</Text>
+        <Text style={styles.cardLabel}>Today</Text>
+        <Text style={styles.cardValue}>Focus-ready</Text>
+        <Text style={styles.cardText}>
+          Start a session, review your selection, or check recent history
+        </Text>
       </View>
-      <View style={styles.links}>
-        <Link href="/onboarding" style={styles.link}>
-          Go to Onboarding
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Main actions</Text>
+
+        <Link href={'/focus-session'} style={styles.linkCard}>
+          Start Focus Session
         </Link>
-        <Link href="/session" style={styles.link}>
-          Go to Session
+
+        <Link href={'/selection-test'} style={styles.linkCard}>
+          Current Selection
         </Link>
-        <Link href="/settings" style={styles.link}>
-          Go to Settings
+
+        <Link href={'/history'} style={styles.linkCard}>
+          History
         </Link>
-        <Link href="/native-test" style={styles.link}>
-          Go to Native Test
+
+        <Link href={'/settings'} style={styles.linkCard}>
+          Settings
         </Link>
-        <Link href="/selection-test" style={styles.link}>
-          Go to Selection Test
-        </Link>
-        <Link href="/focus-session" style={styles.link}>
-          Go to Focus Session
-        </Link>
-        <Link href="/history" style={styles.link}>
-          Go to History
-        </Link>
+        {__DEV__ ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Developer Tools</Text>
+
+            <Link href={'/native-test'} style={styles.devLink}>
+              Permission Debug
+            </Link>
+          </View>
+        ) : null}
       </View>
     </View>
   );
