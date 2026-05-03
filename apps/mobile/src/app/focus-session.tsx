@@ -4,6 +4,7 @@ import { applyShield, clearShield } from '@/services/focusControl';
 import {
   clearActiveSession,
   loadActiveSession,
+  loadSelectionSummary,
   saveActiveSession,
 } from '@/services/sessionStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
@@ -60,6 +61,7 @@ export default function FocusSessionScreen() {
   const [unlockStep, setUnlockStep] = useState<'idle' | 'armed' | 'countdown'>('idle');
   const [unlockCountdown, setUnlockCountdown] = useState(0);
   const isFinishingSessionRef = useRef(false);
+  const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
 
   const isSessionActive = session?.status === 'active';
 
@@ -92,7 +94,12 @@ export default function FocusSessionScreen() {
         setLoading(true);
         setError('');
 
-        const storedSession = await loadActiveSession();
+        const [storedSession, storedSelectionSummary] = await Promise.all([
+          loadActiveSession(),
+          loadSelectionSummary(),
+        ]);
+
+        setSelectionSummary(storedSelectionSummary);
 
         if (!storedSession) {
           setLastAction('No active session found.');
