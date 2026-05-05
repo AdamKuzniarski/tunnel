@@ -44,6 +44,7 @@ function ActionButton({
         style={[
           styles.actionButtonText,
           variant === 'secondary' && styles.actionButtonTextSecondary,
+          variant === 'danger' && styles.actionButtonTextDanger,
         ]}
       >
         {label}
@@ -654,6 +655,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   actionButtonTextSecondary: {
+    color: colors.foreground,
+  },
+  actionButtonTextDanger: {
     color: colors.foreground,
   },
   warningCard: {
