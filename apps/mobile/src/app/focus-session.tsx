@@ -368,6 +368,27 @@ export default function FocusSessionScreen() {
           </View>
         </View>
 
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Current selection</Text>
+
+          <View style={styles.metricsRow}>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{selectionSummary?.applicationCount ?? 0}</Text>
+              <Text style={styles.metricLabel}>Apps</Text>
+            </View>
+
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{selectionSummary?.categoryCount ?? 0}</Text>
+              <Text style={styles.metricLabel}>Categories</Text>
+            </View>
+
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{selectionSummary?.webDomainCount ?? 0}</Text>
+              <Text style={styles.metricLabel}>Web</Text>
+            </View>
+          </View>
+        </View>
+
         <Text style={styles.label}>Selected duration</Text>
         <View style={styles.buttonRow}>
           {DURATION_OPTIONS.map((duration) => (
