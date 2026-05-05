@@ -221,6 +221,7 @@ export default function FocusSessionScreen() {
 
         const result = await clearShield();
         await clearActiveSession();
+
         await appendSessionHistoryEntry({
           id: `${activeSession.id}-emergency-unlock`,
           startedAt: activeSession.startedAt,
@@ -292,6 +293,8 @@ export default function FocusSessionScreen() {
       setLoading(false);
     }
   }
+
+  const selectionHasEntries = Boolean(selectionSummary?.hasSelection);
 
   return (
     <View style={styles.container}>
