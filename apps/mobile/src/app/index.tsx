@@ -1,5 +1,5 @@
 import { Link, useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { loadSelectionSummary, loadActiveSession } from '@/services/sessionStorage';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const [history, setHistory] = useState<SessionHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [now, setNow] = useState(Date.now());
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -52,6 +53,14 @@ export default function HomeScreen() {
     }, [loadDashboard]),
   );
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const latestEntry = history[0] ?? null;
 
   const emergencyUnlockCount = useMemo(() => {
@@ -59,21 +68,29 @@ export default function HomeScreen() {
   }, [history]);
 
   const sessionStatusValue = useMemo(() => {
-    if (!activeSession || activeSession.status !== 'active') {
+    if (
+      !activeSession ||
+      activeSession.status !== 'active' ||
+      activeSession.endsAt <= now
+    ) {
       return 'idle';
     }
-    const remainingMs = Math.max(activeSession.endsAt - Date.now(), 0);
+    const remainingMs = Math.max(activeSession.endsAt - now, 0);
     const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
 
     return `${remainingMinutes} minutes left`;
-  }, [activeSession]);
+  }, [activeSession, now]);
   const sessionStatusHint = useMemo(() => {
-    if (!activeSession || activeSession.status !== 'active') {
+    if (
+      !activeSession ||
+      activeSession.status !== 'active' ||
+      activeSession.endsAt <= now
+    ) {
       return 'No focus session is running right now.';
     }
 
     return `Current session: ${activeSession.durationMinutes} minutes`;
-  }, [activeSession]);
+  }, [activeSession, now]);
 
   const selectionValue = selectionSummary?.hasSelection
     ? `${selectionSummary.applicationCount} apps`
