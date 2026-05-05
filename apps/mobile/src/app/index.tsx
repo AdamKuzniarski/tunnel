@@ -108,6 +108,17 @@ export default function HomeScreen() {
         </Text>
       </View>
 
+      <View style={styles.dashboardGrid}>
+        <DashboardCard label={'Session'} value={sessionStatusValue} hint={sessionStatusHint} />
+        <DashboardCard label={'Selection'} value={selectionValue} hint={selectionHint} />
+        <DashboardCard label={'Latest'} value={latestHistoryValue} hint={latestHistoryHint} />
+        <DashboardCard
+          label={'Emergency unlocks'}
+          value={String(emergencyUnlockCount)}
+          hint={'Counted from recorded session history'}
+        />
+      </View>
+
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Main actions</Text>
 
@@ -126,16 +137,19 @@ export default function HomeScreen() {
         <Link href={'/settings'} style={styles.linkCard}>
           Settings
         </Link>
-        {__DEV__ ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Developer Tools</Text>
-
-            <Link href={'/native-test'} style={styles.devLink}>
-              Permission Debug
-            </Link>
-          </View>
-        ) : null}
       </View>
+      {loading ? <Text style={styles.infoText}>Loading dashboard...</Text> : null}
+      {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
+
+      {__DEV__ ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Developer Tools</Text>
+
+          <Link href={'/native-test'} style={styles.devLink}>
+            Permission Debug
+          </Link>
+        </View>
+      ) : null}
     </ScrollView>
   );
 }
