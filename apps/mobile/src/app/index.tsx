@@ -10,10 +10,10 @@ import { colors, radius, spacing, typography } from '../theme';
 
 function DashboardCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <View>
-      <Text style={}></Text>
-      <Text></Text>
-      <Text></Text>
+    <View style={styles.dashboardCard}>
+      <Text style={styles.dashboardCardLabel}>{label}</Text>
+      <Text style={styles.dashboardCardValue}>{value}</Text>
+      <Text style={styles.dashboardCardHint}>{hint}</Text>
     </View>
   );
 }
