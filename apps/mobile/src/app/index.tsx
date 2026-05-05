@@ -1,7 +1,22 @@
-import { Link } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { loadSelectionSummary, loadActiveSession } from '@/services/sessionStorage';
+import { loadSessionHistory } from '@/services/sessionHistoryStorage';
+import { FocusSession } from '@/types/session';
+import { SessionHistoryEntry } from '@/types/sessionHistory';
+import { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
 import { colors, radius, spacing, typography } from '../theme';
 
+function DashboardCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+  return (
+    <View>
+      <Text style={}></Text>
+      <Text></Text>
+      <Text></Text>
+    </View>
+  );
+}
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
@@ -53,8 +68,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  content: {
     padding: spacing.xl,
     gap: spacing.xl,
+    paddingBottom: spacing['3xl'],
   },
   hero: {
     marginTop: spacing['3xl'],
@@ -70,26 +88,53 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.body,
   },
-  card: {
+  heroCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.lg,
-    padding: 20,
+    padding: spacing.lg,
     gap: spacing.sm,
   },
-  cardLabel: {
+  heroCardLabel: {
     color: colors.mutedForeground,
     fontSize: typography.label,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
-  cardValue: {
+  heroCardValue: {
     color: colors.foreground,
     fontSize: typography.title,
     fontWeight: '700',
   },
-  cardText: {
+  heroCardText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+  },
+  dashboardGrid: {
+    gap: spacing.md,
+  },
+  dashboardCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  dashboardCardLabel: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  dashboardCardValue: {
+    color: colors.foreground,
+    fontSize: typography.sectionTitle,
+    fontWeight: '700',
+  },
+  dashboardCardHint: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
@@ -118,5 +163,14 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.bodySmall,
     paddingVertical: spacing.sm,
+  },
+  infoText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
   },
 });
