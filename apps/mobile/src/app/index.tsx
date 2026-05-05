@@ -90,16 +90,21 @@ export default function HomeScreen() {
     : 'Your recent sessions will appear here.';
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.hero}>
         <Text style={styles.brand}>tunnel</Text>
         <Text style={styles.tagline}>Block the noise. Stay in flow.</Text>
       </View>
-      <View style={styles.card}>
-        <Text style={styles.cardLabel}>Today</Text>
-        <Text style={styles.cardValue}>Focus-ready</Text>
-        <Text style={styles.cardText}>
-          Start a session, review your selection, or check recent history
+
+      <View style={styles.heroCard}>
+        <Text style={styles.heroCardLabel}>Overview</Text>
+        <Text style={styles.heroCardValue}>Focus dashboard</Text>
+        <Text style={styles.heroCardText}>
+          Your current, session, selection, state, and recent activity in one place.
         </Text>
       </View>
 
@@ -131,7 +136,7 @@ export default function HomeScreen() {
           </View>
         ) : null}
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
