@@ -18,6 +18,34 @@ function DashboardCard({ label, value, hint }: { label: string; value: string; h
   );
 }
 export default function HomeScreen() {
+  const [activeSession, setActiveSession] = useState<FocusSession | null>(null);
+  const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
+  const [history, setHistory] = useState<SessionHistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const [storedSession, storedSelection, storedHistory] = await Promise.all([
+        loadActiveSession(),
+        loadSelectionSummary(),
+        loadSessionHistory(),
+      ]);
+
+      setActiveSession(storedSession);
+      setSelectionSummary(storedSelection);
+      setHistory(storedHistory);
+    } catch (err) {
+      console.log(`loadDashboard error:`, err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
