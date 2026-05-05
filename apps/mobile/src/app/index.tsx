@@ -46,6 +46,49 @@ export default function HomeScreen() {
     }
   }, []);
 
+  useFocusEffect(
+    useCallback(() => {
+      void loadDashboard();
+    }, [loadDashboard]),
+  );
+
+  const latestEntry = history[0] ?? null;
+
+  const emergencyUnlockCount = useMemo(() => {
+    return history.filter((entry) => entry.outcome === 'emergency_unlock').length;
+  }, [history]);
+
+  const sessionStatusValue = useMemo(() => {
+    if (!activeSession || activeSession.status !== 'active') {
+      return 'idle';
+    }
+    const remainingMs = Math.max(activeSession.endsAt - Date.now(), 0);
+    const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
+
+    return `${remainingMinutes} minutes left`;
+  }, [activeSession]);
+  const sessionStatusHint = useMemo(() => {
+    if (!activeSession || activeSession.status !== 'active') {
+      return 'No focus session is running right now.';
+    }
+
+    return `Current session: ${activeSession.durationMinutes} minutes`;
+  }, [activeSession]);
+
+  const selectionValue = selectionSummary?.hasSelection
+    ? `${selectionSummary.applicationCount} apps`
+    : 'Not ready';
+
+  const selectionHint = selectionSummary?.hasSelection
+    ? `${selectionSummary.categoryCount} categories • ${selectionSummary.webDomainCount} web domains`
+    : 'Choose what tunnel should block first.';
+
+  const latestHistoryValue = latestEntry ? latestEntry.outcome.replace('_', ' ') : 'No history';
+
+  const latestHistoryHint = latestEntry
+    ? `${latestEntry.durationMinutes} min • ${new Date(latestEntry.endedAt).toLocaleDateString()}`
+    : 'Your recent sessions will appear here.';
+
   return (
     <View style={styles.container}>
       <View style={styles.hero}>
