@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, Button, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { applyShield, clearShield } from '@/services/focusControl';
 import {
   clearActiveSession,
@@ -7,10 +7,10 @@ import {
   loadSelectionSummary,
   saveActiveSession,
 } from '@/services/sessionStorage';
-import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
+import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, radius, spacing, typography } from '../theme';
 
 const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
 
@@ -51,9 +51,11 @@ function ActionButton({
     </Pressable>
   );
 }
+
 export default function FocusSessionScreen() {
   const [selectedDuration, setSelectedDuration] = useState<FocusSessionDurationMinutes>(30);
   const [session, setSession] = useState<FocusSession | null>(null);
+  const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastAction, setLastAction] = useState('No action yet.');
   const [error, setError] = useState('');
@@ -61,7 +63,6 @@ export default function FocusSessionScreen() {
   const [unlockStep, setUnlockStep] = useState<'idle' | 'armed' | 'countdown'>('idle');
   const [unlockCountdown, setUnlockCountdown] = useState(0);
   const isFinishingSessionRef = useRef(false);
-  const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
 
   const isSessionActive = session?.status === 'active';
 
@@ -309,7 +310,7 @@ export default function FocusSessionScreen() {
           <Text style={styles.subtitle}>
             {isSessionActive
               ? 'You are inside the tunnel.'
-              : 'Start a focus block with your current selection.'}
+              : 'Start a focused block with your current selection.'}
           </Text>
         </View>
 
@@ -322,154 +323,142 @@ export default function FocusSessionScreen() {
           <Text
             style={[
               styles.statusBadgeText,
-              isSessionActive ? styles.statusBadgeActive : styles.statusBadgeIdle,
+              isSessionActive ? styles.statusBadgeTextActive : styles.statusBadgeTextIdle,
             ]}
           >
             {isSessionActive ? 'ACTIVE' : 'IDLE'}
           </Text>
         </View>
+      </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Remaining time</Text>
-          <Text style={styles.countdownText}>{isSessionActive ? remainingText : '--:--'}</Text>
-          <Text style={styles.cardHint}>
-            {isSessionActive
-              ? `Running ${session?.durationMinutes} minute session`
-              : `Ready for a ${selectedDuration} minute session`}
-          </Text>
-        </View>
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Remaining time</Text>
+        <Text style={styles.countdownText}>{isSessionActive ? remainingText : '--:--'}</Text>
+        <Text style={styles.cardHint}>
+          {isSessionActive
+            ? `Running ${session?.durationMinutes} minute session`
+            : `Ready for a ${selectedDuration} minute session`}
+        </Text>
+      </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Session length</Text>
-          <View style={styles.durationRow}>
-            {DURATION_OPTIONS.map((duration) => {
-              const selected = selectedDuration === duration;
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Session length</Text>
+        <View style={styles.durationRow}>
+          {DURATION_OPTIONS.map((duration) => {
+            const selected = selectedDuration === duration;
 
-              return (
-                <Pressable
-                  key={duration}
-                  onPress={() => setSelectedDuration(duration)}
-                  disabled={isSessionActive || loading}
-                  style={({ pressed }) => [
-                    styles.durationChip,
-                    selected && styles.durationChipSelected,
-                    (isSessionActive || loading) && styles.durationChipDisabled,
-                    pressed && !isSessionActive && !loading && styles.durationChipPressed,
-                  ]}
-                >
-                  <Text
-                    style={[styles.durationChipText, selected && styles.durationChipTextSelected]}
-                  >
-                    {duration} min
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Current selection</Text>
-
-          <View style={styles.metricsRow}>
-            <View style={styles.metricCard}>
-              <Text style={styles.metricValue}>{selectionSummary?.applicationCount ?? 0}</Text>
-              <Text style={styles.metricLabel}>Apps</Text>
-            </View>
-
-            <View style={styles.metricCard}>
-              <Text style={styles.metricValue}>{selectionSummary?.categoryCount ?? 0}</Text>
-              <Text style={styles.metricLabel}>Categories</Text>
-            </View>
-
-            <View style={styles.metricCard}>
-              <Text style={styles.metricValue}>{selectionSummary?.webDomainCount ?? 0}</Text>
-              <Text style={styles.metricLabel}>Web</Text>
-            </View>
-          </View>
-        </View>
-
-        <Text style={styles.label}>Selected duration</Text>
-        <View style={styles.buttonRow}>
-          {DURATION_OPTIONS.map((duration) => (
-            <View key={duration} style={styles.durationButton}>
-              <Button
-                title={`${duration} min`}
+            return (
+              <Pressable
+                key={duration}
                 onPress={() => setSelectedDuration(duration)}
                 disabled={isSessionActive || loading}
-              />
-            </View>
-          ))}
+                style={({ pressed }) => [
+                  styles.durationChip,
+                  selected && styles.durationChipSelected,
+                  (isSessionActive || loading) && styles.durationChipDisabled,
+                  pressed && !isSessionActive && !loading && styles.durationChipPressed,
+                ]}
+              >
+                <Text
+                  style={[styles.durationChipText, selected && styles.durationChipTextSelected]}
+                >
+                  {duration} min
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Current selection</Text>
+
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{selectionSummary?.applicationCount ?? 0}</Text>
+            <Text style={styles.metricLabel}>Apps</Text>
+          </View>
+
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{selectionSummary?.categoryCount ?? 0}</Text>
+            <Text style={styles.metricLabel}>Categories</Text>
+          </View>
+
+          <View style={styles.metricCard}>
+            <Text style={styles.metricValue}>{selectionSummary?.webDomainCount ?? 0}</Text>
+            <Text style={styles.metricLabel}>Web</Text>
+          </View>
         </View>
 
-        <Text style={styles.label}>Current state</Text>
-        <Text style={styles.value}>
-          {isSessionActive ? 'Active session running' : 'No active session'}
+        <Text style={styles.cardHint}>
+          {selectionHasEntries
+            ? 'Your current blocklist is ready for focus mode.'
+            : 'No selection stored yet. Go to Current Selection first.'}
         </Text>
+      </View>
 
-        <Text style={styles.label}>Countdown</Text>
-        <Text style={styles.value}>{isSessionActive ? remainingText : '--:--'}</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Status</Text>
+        <Text style={styles.statusText}>{lastAction}</Text>
 
-        <Text style={styles.label}>Last action</Text>
-        <Text style={styles.value}>{lastAction}</Text>
+        {loading ? <Text style={styles.infoText}>Working...</Text> : null}
+        {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
+      </View>
 
-        {loading ? <Text style={styles.info}>Working...</Text> : null}
-        {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+      <View style={styles.actionsSection}>
+        <ActionButton
+          label="Start Session"
+          onPress={handleStartSession}
+          disabled={isSessionActive || loading || !selectionHasEntries}
+          variant="primary"
+        />
 
-        <View style={styles.actionButton}>
-          <Button
-            title="Start session"
-            onPress={handleStartSession}
-            disabled={isSessionActive || loading}
+        {isSessionActive && unlockStep === 'idle' ? (
+          <ActionButton
+            label="Emergency Unlock"
+            onPress={handleArmEmergencyUnlock}
+            disabled={loading}
+            variant="secondary"
           />
-        </View>
+        ) : null}
 
-        {isSessionActive ? (
-          <View style={styles.actionButton}>
-            {unlockStep === 'idle' ? (
-              <Button
-                title="Emergency unlock"
-                onPress={handleArmEmergencyUnlock}
-                disabled={loading}
-              />
-            ) : null}
+        {isSessionActive && unlockStep === 'armed' ? (
+          <View style={styles.warningCard}>
+            <Text style={styles.warningTitle}>Emergency unlock armed</Text>
+            <Text style={styles.warningBody}>
+              This will clear the shield and end the current session.
+            </Text>
 
-            {unlockStep === 'armed' ? (
-              <View style={styles.unlockPanel}>
-                <Text style={styles.warningText}>
-                  Emergency unlock will clear the shield and end the session.
-                </Text>
+            <ActionButton
+              label="Start 10-second unlock delay"
+              onPress={handleStartEmergencyUnlockCountdown}
+              disabled={loading}
+              variant="danger"
+            />
 
-                <View style={styles.actionButton}>
-                  <Button
-                    title="Start 10-second unlock delay"
-                    onPress={handleStartEmergencyUnlockCountdown}
-                    disabled={loading}
-                  />
-                </View>
+            <ActionButton
+              label="Cancel"
+              onPress={handleCancelEmergencyUnlock}
+              disabled={loading}
+              variant="secondary"
+            />
+          </View>
+        ) : null}
 
-                <View style={styles.actionButton}>
-                  <Button title="Cancel" onPress={handleCancelEmergencyUnlock} disabled={loading} />
-                </View>
-              </View>
-            ) : null}
+        {isSessionActive && unlockStep === 'countdown' ? (
+          <View style={styles.warningCard}>
+            <Text style={styles.warningTitle}>Emergency unlock countdown</Text>
+            <Text style={styles.warningBody}>
+              Unlocking in {unlockCountdown} second
+              {unlockCountdown === 1 ? '' : 's'}...
+            </Text>
 
-            {unlockStep === 'countdown' ? (
-              <View style={styles.unlockPanel}>
-                <Text style={styles.warningText}>
-                  Emergency unlock in {unlockCountdown} second
-                  {unlockCountdown === 1 ? '' : 's'}...
-                </Text>
-
-                <View style={styles.actionButton}>
-                  <Button
-                    title="Cancel unlock"
-                    onPress={handleCancelEmergencyUnlock}
-                    disabled={loading}
-                  />
-                </View>
-              </View>
-            ) : null}
+            <ActionButton
+              label="Cancel unlock"
+              onPress={handleCancelEmergencyUnlock}
+              disabled={loading}
+              variant="secondary"
+            />
           </View>
         ) : null}
       </View>
