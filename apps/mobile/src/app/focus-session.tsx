@@ -297,93 +297,162 @@ export default function FocusSessionScreen() {
   const selectionHasEntries = Boolean(selectionSummary?.hasSelection);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Focus Session</Text>
-
-      <Text style={styles.label}>Selected duration</Text>
-      <View style={styles.buttonRow}>
-        {DURATION_OPTIONS.map((duration) => (
-          <View key={duration} style={styles.durationButton}>
-            <Button
-              title={`${duration} min`}
-              onPress={() => setSelectedDuration(duration)}
-              disabled={isSessionActive || loading}
-            />
-          </View>
-        ))}
-      </View>
-
-      <Text style={styles.label}>Current state</Text>
-      <Text style={styles.value}>
-        {isSessionActive ? 'Active session running' : 'No active session'}
-      </Text>
-
-      <Text style={styles.label}>Countdown</Text>
-      <Text style={styles.value}>{isSessionActive ? remainingText : '--:--'}</Text>
-
-      <Text style={styles.label}>Last action</Text>
-      <Text style={styles.value}>{lastAction}</Text>
-
-      {loading ? <Text style={styles.info}>Working...</Text> : null}
-      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
-
-      <View style={styles.actionButton}>
-        <Button
-          title="Start session"
-          onPress={handleStartSession}
-          disabled={isSessionActive || loading}
-        />
-      </View>
-
-      {isSessionActive ? (
-        <View style={styles.actionButton}>
-          {unlockStep === 'idle' ? (
-            <Button
-              title="Emergency unlock"
-              onPress={handleArmEmergencyUnlock}
-              disabled={loading}
-            />
-          ) : null}
-
-          {unlockStep === 'armed' ? (
-            <View style={styles.unlockPanel}>
-              <Text style={styles.warningText}>
-                Emergency unlock will clear the shield and end the session.
-              </Text>
-
-              <View style={styles.actionButton}>
-                <Button
-                  title="Start 10-second unlock delay"
-                  onPress={handleStartEmergencyUnlockCountdown}
-                  disabled={loading}
-                />
-              </View>
-
-              <View style={styles.actionButton}>
-                <Button title="Cancel" onPress={handleCancelEmergencyUnlock} disabled={loading} />
-              </View>
-            </View>
-          ) : null}
-
-          {unlockStep === 'countdown' ? (
-            <View style={styles.unlockPanel}>
-              <Text style={styles.warningText}>
-                Emergency unlock in {unlockCountdown} second
-                {unlockCountdown === 1 ? '' : 's'}...
-              </Text>
-
-              <View style={styles.actionButton}>
-                <Button
-                  title="Cancel unlock"
-                  onPress={handleCancelEmergencyUnlock}
-                  disabled={loading}
-                />
-              </View>
-            </View>
-          ) : null}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.hero}>
+        <View style={styles.heroCopy}>
+          <Text style={styles.eyebrow}>Session</Text>
+          <Text style={styles.title}>Focus Session</Text>
+          <Text style={styles.subtitle}>
+            {isSessionActive
+              ? 'You are inside the tunnel.'
+              : 'Start a focus block with your current selection.'}
+          </Text>
         </View>
-      ) : null}
-    </View>
+
+        <View
+          style={[
+            styles.statusBadge,
+            isSessionActive ? styles.statusBadgeActive : styles.statusBadgeIdle,
+          ]}
+        >
+          <Text
+            style={[
+              styles.statusBadgeText,
+              isSessionActive ? styles.statusBadgeActive : styles.statusBadgeIdle,
+            ]}
+          >
+            {isSessionActive ? 'ACTIVE' : 'IDLE'}
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Remaining time</Text>
+          <Text style={styles.countdownText}>{isSessionActive ? remainingText : '--:--'}</Text>
+          <Text style={styles.cardHint}>
+            {isSessionActive
+              ? `Running ${session?.durationMinutes} minute session`
+              : `Ready for a ${selectedDuration} minute session`}
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Session length</Text>
+          <View style={styles.durationRow}>
+            {DURATION_OPTIONS.map((duration) => {
+              const selected = selectedDuration === duration;
+
+              return (
+                <Pressable
+                  key={duration}
+                  onPress={() => setSelectedDuration(duration)}
+                  disabled={isSessionActive || loading}
+                  style={({ pressed }) => [
+                    styles.durationChip,
+                    selected && styles.durationChipSelected,
+                    (isSessionActive || loading) && styles.durationChipDisabled,
+                    pressed && !isSessionActive && !loading && styles.durationChipPressed,
+                  ]}
+                >
+                  <Text
+                    style={[styles.durationChipText, selected && styles.durationChipTextSelected]}
+                  >
+                    {duration} min
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        <Text style={styles.label}>Selected duration</Text>
+        <View style={styles.buttonRow}>
+          {DURATION_OPTIONS.map((duration) => (
+            <View key={duration} style={styles.durationButton}>
+              <Button
+                title={`${duration} min`}
+                onPress={() => setSelectedDuration(duration)}
+                disabled={isSessionActive || loading}
+              />
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.label}>Current state</Text>
+        <Text style={styles.value}>
+          {isSessionActive ? 'Active session running' : 'No active session'}
+        </Text>
+
+        <Text style={styles.label}>Countdown</Text>
+        <Text style={styles.value}>{isSessionActive ? remainingText : '--:--'}</Text>
+
+        <Text style={styles.label}>Last action</Text>
+        <Text style={styles.value}>{lastAction}</Text>
+
+        {loading ? <Text style={styles.info}>Working...</Text> : null}
+        {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+
+        <View style={styles.actionButton}>
+          <Button
+            title="Start session"
+            onPress={handleStartSession}
+            disabled={isSessionActive || loading}
+          />
+        </View>
+
+        {isSessionActive ? (
+          <View style={styles.actionButton}>
+            {unlockStep === 'idle' ? (
+              <Button
+                title="Emergency unlock"
+                onPress={handleArmEmergencyUnlock}
+                disabled={loading}
+              />
+            ) : null}
+
+            {unlockStep === 'armed' ? (
+              <View style={styles.unlockPanel}>
+                <Text style={styles.warningText}>
+                  Emergency unlock will clear the shield and end the session.
+                </Text>
+
+                <View style={styles.actionButton}>
+                  <Button
+                    title="Start 10-second unlock delay"
+                    onPress={handleStartEmergencyUnlockCountdown}
+                    disabled={loading}
+                  />
+                </View>
+
+                <View style={styles.actionButton}>
+                  <Button title="Cancel" onPress={handleCancelEmergencyUnlock} disabled={loading} />
+                </View>
+              </View>
+            ) : null}
+
+            {unlockStep === 'countdown' ? (
+              <View style={styles.unlockPanel}>
+                <Text style={styles.warningText}>
+                  Emergency unlock in {unlockCountdown} second
+                  {unlockCountdown === 1 ? '' : 's'}...
+                </Text>
+
+                <View style={styles.actionButton}>
+                  <Button
+                    title="Cancel unlock"
+                    onPress={handleCancelEmergencyUnlock}
+                    disabled={loading}
+                  />
+                </View>
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </View>
+    </ScrollView>
   );
 }
 
