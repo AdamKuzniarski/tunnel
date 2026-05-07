@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { applyShield, clearShield } from '@/services/focusControl';
 import {
   clearActiveSession,
@@ -10,48 +10,12 @@ import {
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '@/theme';
+import { Screen } from '@/components/ui/Screen';
+import { Card } from '@/components/ui/Card';
+import { AppButton } from '@/components/ui/AppButton';
 
 const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
-
-type ActionButtonProps = {
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
-};
-
-function ActionButton({
-  label,
-  onPress,
-  disabled = false,
-  variant = 'primary',
-}: ActionButtonProps) {
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      style={({ pressed }) => [
-        styles.actionButtonBase,
-        variant === 'primary' && styles.actionButtonPrimary,
-        variant === 'secondary' && styles.actionButtonSecondary,
-        variant === 'danger' && styles.actionButtonDanger,
-        disabled && styles.actionButtonDisabled,
-        pressed && !disabled && styles.actionButtonPressed,
-      ]}
-    >
-      <Text
-        style={[
-          styles.actionButtonText,
-          variant === 'secondary' && styles.actionButtonTextSecondary,
-          variant === 'danger' && styles.actionButtonTextDanger,
-        ]}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 export default function FocusSessionScreen() {
   const [selectedDuration, setSelectedDuration] = useState<FocusSessionDurationMinutes>(30);
@@ -299,11 +263,7 @@ export default function FocusSessionScreen() {
   const selectionHasEntries = Boolean(selectionSummary?.hasSelection);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <Screen scroll>
       <View style={styles.hero}>
         <View style={styles.heroCopy}>
           <Text style={styles.eyebrow}>Session</Text>
@@ -332,17 +292,17 @@ export default function FocusSessionScreen() {
         </View>
       </View>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardLabel}>Remaining time</Text>
-        <Text style={styles.countdownText}>{isSessionActive ? remainingText : '--:--'}</Text>
+        <Text style={styles.countdownText}>{isSessionActive ? remainingText : '-- : --'}</Text>
         <Text style={styles.cardHint}>
           {isSessionActive
             ? `Running ${session?.durationMinutes} minute session`
             : `Ready for a ${selectedDuration} minute session`}
         </Text>
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardLabel}>Session length</Text>
         <View style={styles.durationRow}>
           {DURATION_OPTIONS.map((duration) => {
@@ -369,9 +329,9 @@ export default function FocusSessionScreen() {
             );
           })}
         </View>
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardLabel}>Current selection</Text>
 
         <View style={styles.metricsRow}>
@@ -396,18 +356,18 @@ export default function FocusSessionScreen() {
             ? 'Your current blocklist is ready for focus mode.'
             : 'No selection stored yet. Go to Current Selection first.'}
         </Text>
-      </View>
+      </Card>
 
-      <View style={styles.card}>
+      <Card>
         <Text style={styles.cardLabel}>Status</Text>
         <Text style={styles.statusText}>{lastAction}</Text>
 
         {loading ? <Text style={styles.infoText}>Working...</Text> : null}
         {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </View>
+      </Card>
 
       <View style={styles.actionsSection}>
-        <ActionButton
+        <AppButton
           label="Start Session"
           onPress={handleStartSession}
           disabled={isSessionActive || loading || !selectionHasEntries}
@@ -415,7 +375,7 @@ export default function FocusSessionScreen() {
         />
 
         {isSessionActive && unlockStep === 'idle' ? (
-          <ActionButton
+          <AppButton
             label="Emergency Unlock"
             onPress={handleArmEmergencyUnlock}
             disabled={loading}
@@ -424,46 +384,46 @@ export default function FocusSessionScreen() {
         ) : null}
 
         {isSessionActive && unlockStep === 'armed' ? (
-          <View style={styles.warningCard}>
+          <Card>
             <Text style={styles.warningTitle}>Emergency unlock armed</Text>
             <Text style={styles.warningBody}>
               This will clear the shield and end the current session.
             </Text>
 
-            <ActionButton
+            <AppButton
               label="Start 10-second unlock delay"
               onPress={handleStartEmergencyUnlockCountdown}
               disabled={loading}
               variant="danger"
             />
 
-            <ActionButton
+            <AppButton
               label="Cancel"
               onPress={handleCancelEmergencyUnlock}
               disabled={loading}
               variant="secondary"
             />
-          </View>
+          </Card>
         ) : null}
 
         {isSessionActive && unlockStep === 'countdown' ? (
-          <View style={styles.warningCard}>
+          <Card>
             <Text style={styles.warningTitle}>Emergency unlock countdown</Text>
             <Text style={styles.warningBody}>
               Unlocking in {unlockCountdown} second
               {unlockCountdown === 1 ? '' : 's'}...
             </Text>
 
-            <ActionButton
+            <AppButton
               label="Cancel unlock"
               onPress={handleCancelEmergencyUnlock}
               disabled={loading}
               variant="secondary"
             />
-          </View>
+          </Card>
         ) : null}
       </View>
-    </ScrollView>
+    </Screen>
   );
 }
 
@@ -473,11 +433,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: spacing.md,
+    ...(Platform.OS === 'web' ? { gap: spacing.md } : {}),
   },
   heroCopy: {
     flex: 1,
-    gap: spacing.xs,
+    ...(Platform.OS === 'web' ? { gap: spacing.xs } : {}),
   },
   eyebrow: {
     color: colors.mutedForeground,
@@ -520,7 +480,7 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   cardLabel: {
-    backgroundColor: colors.mutedForeground,
+    color: colors.mutedForeground,
     fontSize: typography.label,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -538,8 +498,8 @@ const styles = StyleSheet.create({
   },
   durationRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
     flexWrap: 'wrap',
+    ...(Platform.OS === 'web' ? { gap: spacing.sm } : {}),
   },
   durationChip: {
     backgroundColor: colors.surfaceElevated,
@@ -577,7 +537,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     padding: spacing.md,
-    gap: spacing.xs,
+    ...(Platform.OS === 'web' ? { gap: spacing.xs } : {}),
   },
   metricValue: {
     color: colors.foreground,
@@ -604,7 +564,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   actionsSection: {
-    gap: spacing.md,
+    ...(Platform.OS === 'web' ? { gap: spacing.md } : {}),
   },
   warningTitle: {
     color: colors.foreground,

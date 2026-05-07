@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Button, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import type { SessionHistoryEntry } from '@/types/sessionHistory';
+import { colors, spacing, typography } from '@/theme';
+import { Screen } from '@/components/ui/Screen';
+import { Card } from '@/components/ui/Card';
+import { SectionTitle } from '@/components/ui/SectionTitle';
+import { AppButton } from '@/components/ui/AppButton';
 
 export default function HistoryScreen() {
   const [entries, setEntries] = useState<SessionHistoryEntry[]>([]);
@@ -16,7 +21,7 @@ export default function HistoryScreen() {
       const history = await loadSessionHistory();
       setEntries(history);
     } catch (err) {
-      console.log('refresh');
+      console.log('refreshHistory error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     } finally {
       setLoading(false);
@@ -28,69 +33,93 @@ export default function HistoryScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Session History</Text>
-
-      <View style={styles.actionButton}>
-        <Button title="Refresh" onPress={refreshHistory} disabled={loading} />
+    <Screen scroll>
+      <View style={styles.hero}>
+        <Text style={styles.eyebrow}>History</Text>
+        <Text style={styles.title}>Session History</Text>
+        <Text style={styles.subtitle}>Review completed sessions and emergency unlocks.</Text>
       </View>
 
-      {loading ? <Text style={styles.info}>Loading...</Text> : null}
-      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+      <View style={styles.actions}>
+        <AppButton
+          label={loading ? 'Refreshing...' : 'Refresh History'}
+          onPress={refreshHistory}
+          disabled={loading}
+          variant="secondary"
+        />
+      </View>
 
-      <ScrollView style={styles.list}>
-        {entries.length === 0 ? (
-          <Text style={styles.info}>No history yet.</Text>
-        ) : (
-          entries.map((entry) => (
-            <View key={entry.id} style={styles.entry}>
-              <Text style={styles.entryTitle}>{entry.outcome}</Text>
-              <Text style={styles.entryText}>Duration: {entry.durationMinutes} min</Text>
-              <Text style={styles.entryText}>
-                Ended: {new Date(entry.endedAt).toLocaleString()}
-              </Text>
-            </View>
-          ))
-        )}
-      </ScrollView>
-    </View>
+      {!loading && entries.length === 0 ? (
+        <Card>
+          <SectionTitle>No history yet</SectionTitle>
+          <Text style={styles.bodyText}>
+            Your completed sessions and unlock events will appear here.
+          </Text>
+        </Card>
+      ) : null}
+
+      {entries.map((entry) => (
+        <Card key={entry.id}>
+          <Text style={styles.cardLabel}>{entry.outcome.replace('_', ' ')}</Text>
+          <Text style={styles.cardValue}>{entry.durationMinutes} min</Text>
+          <Text style={styles.bodyText}>Started: {new Date(entry.startedAt).toLocaleString()}</Text>
+          <Text style={styles.bodyText}>Ended: {new Date(entry.endedAt).toLocaleString()}</Text>
+        </Card>
+      ))}
+
+      {loading ? <Text style={styles.infoText}>Loading history...</Text> : null}
+      {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    gap: 12,
+  hero: {
+    marginTop: spacing['2xl'],
+    gap: spacing.xs,
+  },
+  eyebrow: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   title: {
-    fontSize: 28,
+    color: colors.foreground,
+    fontSize: typography.title,
     fontWeight: '700',
   },
-  actionButton: {
-    marginBottom: 8,
+  subtitle: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
   },
-  list: {
-    flex: 1,
+  actions: {
+    gap: spacing.md,
   },
-  entry: {
-    marginBottom: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  entryTitle: {
-    fontSize: 16,
+  cardLabel: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
     fontWeight: '600',
+    textTransform: 'uppercase',
   },
-  entryText: {
-    fontSize: 14,
-    marginTop: 4,
+  cardValue: {
+    color: colors.foreground,
+    fontSize: typography.sectionTitle,
+    fontWeight: '700',
   },
-  info: {
-    fontSize: 16,
+  bodyText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
   },
-  error: {
-    fontSize: 16,
+  infoText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
   },
 });
