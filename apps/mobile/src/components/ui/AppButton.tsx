@@ -27,7 +27,7 @@ export function AppButton({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[styles.text, variant === 'secondary' && styles.textLight]}>{label}</Text>
+      <Text style={[styles.text, (variant === 'secondary' || variant === 'danger') && styles.textLight]}>{label}</Text>
     </Pressable>
   );
 }

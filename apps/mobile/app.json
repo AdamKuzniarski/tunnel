@@ -44,18 +44,18 @@
           }
         }
       ],
-      [
-        "expo-font",
-        {
-          "fonts": [
-            "./assets/fonts/Geist-Regular.ttf",
-            "./assets/fonts/Geist-Medium.ttf",
-            "./assets/fonts/Geist-SemiBold.ttf",
-            "./assets/fonts/GeistMono-Regular.ttf",
-            "./assets/fonts/GeistMono-Medium.ttf"
-          ]
-        }
-      ]
+        [
+          "expo-font",
+          {
+            "fonts": [
+              "./src/assets/fonts/Geist-Regular.ttf",
+              "./src/assets/fonts/Geist-Medium.ttf",
+              "./src/assets/fonts/Geist-SemiBold.ttf",
+              "./src/assets/fonts/GeistMono-Regular.ttf",
+              "./src/assets/fonts/GeistMono-Medium.ttf"
+            ]
+          }
+        ]
     ],
     "experiments": {
       "typedRoutes": true,
