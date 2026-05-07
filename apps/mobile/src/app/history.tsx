@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import type { SessionHistoryEntry } from '@/types/sessionHistory';
@@ -12,25 +12,48 @@ export default function HistoryScreen() {
   const [entries, setEntries] = useState<SessionHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const isMountedRef = useRef(true);
 
-  async function refreshHistory() {
+  const refreshHistory = useCallback(async () => {
     try {
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setLoading(true);
       setError('');
 
       const history = await loadSessionHistory();
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setEntries(history);
     } catch (err) {
-      console.log('refreshHistory error', err);
+      if (!isMountedRef.current) {
+        return;
+      }
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
-  }
+  }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     void refreshHistory();
-  }, []);
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [refreshHistory]);
+
+  const handleRefreshPress = useCallback(() => {
+    void refreshHistory();
+  }, [refreshHistory]);
 
   return (
     <Screen scroll>
@@ -43,7 +66,7 @@ export default function HistoryScreen() {
       <View style={styles.actions}>
         <AppButton
           label={loading ? 'Refreshing...' : 'Refresh History'}
-          onPress={refreshHistory}
+          onPress={handleRefreshPress}
           disabled={loading}
           variant="secondary"
         />
