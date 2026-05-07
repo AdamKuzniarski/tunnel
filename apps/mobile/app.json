@@ -43,6 +43,18 @@
             "deploymentTarget": "16.0"
           }
         }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Geist-Regular.ttf",
+            "./assets/fonts/Geist-Medium.ttf",
+            "./assets/fonts/Geist-SemiBold.ttf",
+            "./assets/fonts/GeistMono-Regular.ttf",
+            "./assets/fonts/GeistMono-Medium.ttf"
+          ]
+        }
       ]
     ],
     "experiments": {
