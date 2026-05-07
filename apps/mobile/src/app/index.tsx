@@ -6,7 +6,7 @@ import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import { FocusSession } from '@/types/session';
 import { SessionHistoryEntry } from '@/types/sessionHistory';
 import { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
 import { StatCard } from '@/components/ui/StatCard';

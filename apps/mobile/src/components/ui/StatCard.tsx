@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '@/theme';
-import { Props } from 'expo-system-ui/plugin/src/withAndroidUserInterfaceStyle';
 
 type StatCardProps = {
   label: string;
@@ -10,7 +9,7 @@ type StatCardProps = {
 
 export function StatCard({ label, value, hint }: StatCardProps) {
   return (
-    <View>
+    <View style={styles.card}>
       <Text style={styles.label}>{label}</Text>
       <Text style={styles.value}>{value}</Text>
       {hint ? <Text style={styles.hint}>{hint}</Text> : null}
