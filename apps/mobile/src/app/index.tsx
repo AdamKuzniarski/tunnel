@@ -1,22 +1,17 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { loadSelectionSummary, loadActiveSession } from '@/services/sessionStorage';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import { FocusSession } from '@/types/session';
 import { SessionHistoryEntry } from '@/types/sessionHistory';
 import { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
 import { colors, radius, spacing, typography } from '../theme';
+import { Screen } from '@/components/ui/Screen';
+import { Card } from '@/components/ui/Card';
+import { StatCard } from '@/components/ui/StatCard';
+import { SectionTitle } from '@/components/ui/SectionTitle';
 
-function DashboardCard({ label, value, hint }: { label: string; value: string; hint: string }) {
-  return (
-    <View style={styles.dashboardCard}>
-      <Text style={styles.dashboardCardLabel}>{label}</Text>
-      <Text style={styles.dashboardCardValue}>{value}</Text>
-      <Text style={styles.dashboardCardHint}>{hint}</Text>
-    </View>
-  );
-}
 export default function HomeScreen() {
   const [activeSession, setActiveSession] = useState<FocusSession | null>(null);
   const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
@@ -68,11 +63,7 @@ export default function HomeScreen() {
   }, [history]);
 
   const sessionStatusValue = useMemo(() => {
-    if (
-      !activeSession ||
-      activeSession.status !== 'active' ||
-      activeSession.endsAt <= now
-    ) {
+    if (!activeSession || activeSession.status !== 'active' || activeSession.endsAt <= now) {
       return 'idle';
     }
     const remainingMs = Math.max(activeSession.endsAt - now, 0);
@@ -81,11 +72,7 @@ export default function HomeScreen() {
     return `${remainingMinutes} minutes left`;
   }, [activeSession, now]);
   const sessionStatusHint = useMemo(() => {
-    if (
-      !activeSession ||
-      activeSession.status !== 'active' ||
-      activeSession.endsAt <= now
-    ) {
+    if (!activeSession || activeSession.status !== 'active' || activeSession.endsAt <= now) {
       return 'No focus session is running right now.';
     }
 
@@ -107,29 +94,25 @@ export default function HomeScreen() {
     : 'Your recent sessions will appear here.';
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
+    <Screen scroll>
       <View style={styles.hero}>
         <Text style={styles.brand}>tunnel</Text>
         <Text style={styles.tagline}>Block the noise. Stay in flow.</Text>
       </View>
 
-      <View style={styles.heroCard}>
-        <Text style={styles.heroCardLabel}>Overview</Text>
-        <Text style={styles.heroCardValue}>Focus dashboard</Text>
-        <Text style={styles.heroCardText}>
+      <Card>
+        <Text style={styles.cardLabel}>Overview</Text>
+        <Text style={styles.cardValue}>Focus dashboard</Text>
+        <Text style={styles.cardText}>
           Your current, session, selection, state, and recent activity in one place.
         </Text>
-      </View>
+      </Card>
 
-      <View style={styles.dashboardGrid}>
-        <DashboardCard label={'Session'} value={sessionStatusValue} hint={sessionStatusHint} />
-        <DashboardCard label={'Selection'} value={selectionValue} hint={selectionHint} />
-        <DashboardCard label={'Latest'} value={latestHistoryValue} hint={latestHistoryHint} />
-        <DashboardCard
+      <View style={styles.stats}>
+        <StatCard label={'Session'} value={sessionStatusValue} hint={sessionStatusHint} />
+        <StatCard label={'Selection'} value={selectionValue} hint={selectionHint} />
+        <StatCard label={'Latest'} value={latestHistoryValue} hint={latestHistoryHint} />
+        <StatCard
           label={'Emergency unlocks'}
           value={String(emergencyUnlockCount)}
           hint={'Counted from recorded session history'}
@@ -137,7 +120,7 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Main actions</Text>
+        <SectionTitle>Main actions</SectionTitle>
 
         <Link href={'/focus-session'} style={styles.linkCard}>
           Start Focus Session
@@ -155,32 +138,13 @@ export default function HomeScreen() {
           Settings
         </Link>
       </View>
-      {loading ? <Text style={styles.infoText}>Loading dashboard...</Text> : null}
-      {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-
-      {__DEV__ ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Developer Tools</Text>
-
-          <Link href={'/native-test'} style={styles.devLink}>
-            Permission Debug
-          </Link>
-        </View>
-      ) : null}
-    </ScrollView>
+      {loading ? <Text style={styles.info}>Loading dashboard...</Text> : null}
+      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.xl,
-    gap: spacing.xl,
-    paddingBottom: spacing['3xl'],
-  },
   hero: {
     marginTop: spacing['3xl'],
     gap: spacing.sm,
@@ -195,89 +159,46 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: typography.body,
   },
-  heroCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  heroCardLabel: {
+  cardLabel: {
     color: colors.mutedForeground,
     fontSize: typography.label,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
-  heroCardValue: {
+  cardValue: {
     color: colors.foreground,
     fontSize: typography.title,
     fontWeight: '700',
   },
-  heroCardText: {
+  cardText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
   },
-  dashboardGrid: {
+  stats: {
     gap: spacing.md,
-  },
-  dashboardCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  dashboardCardLabel: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  dashboardCardValue: {
-    color: colors.foreground,
-    fontSize: typography.sectionTitle,
-    fontWeight: '700',
-  },
-  dashboardCardHint: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
   },
   section: {
     gap: spacing.md,
-  },
-  sectionTitle: {
-    color: colors.foreground,
-    fontSize: typography.sectionTitle,
-    fontWeight: '600',
   },
   linkCard: {
     backgroundColor: colors.surface,
     color: colors.foreground,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.lg,
+    borderRadius: 12,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
     fontSize: typography.body,
     fontWeight: '600',
     overflow: 'hidden',
   },
-  devLink: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    paddingVertical: spacing.sm,
-  },
-  infoText: {
+  info: {
     color: colors.muted,
     fontSize: typography.bodySmall,
   },
-  errorText: {
+  error: {
     color: colors.danger,
     fontSize: typography.bodySmall,
-    lineHeight: 22,
   },
 });
