@@ -468,15 +468,6 @@ export default function FocusSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.xl,
-    gap: spacing.lg,
-    paddingBottom: spacing['3xl'],
-  },
   hero: {
     marginTop: spacing['2xl'],
     flexDirection: 'row',
@@ -528,16 +519,8 @@ const styles = StyleSheet.create({
   statusBadgeTextIdle: {
     color: colors.muted,
   },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.md,
-  },
   cardLabel: {
-    color: colors.mutedForeground,
+    backgroundColor: colors.mutedForeground,
     fontSize: typography.label,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -621,51 +604,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   actionsSection: {
-    gap: spacing.md,
-  },
-  actionButtonBase: {
-    borderRadius: radius.lg,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  actionButtonPrimary: {
-    backgroundColor: colors.foreground,
-    borderColor: colors.foreground,
-  },
-  actionButtonSecondary: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-  },
-  actionButtonDanger: {
-    backgroundColor: colors.surface,
-    borderColor: colors.danger,
-  },
-  actionButtonDisabled: {
-    opacity: 0.45,
-  },
-  actionButtonPressed: {
-    opacity: 0.8,
-  },
-  actionButtonText: {
-    color: colors.background,
-    fontSize: typography.body,
-    fontWeight: '700',
-  },
-  actionButtonTextSecondary: {
-    color: colors.foreground,
-  },
-  actionButtonTextDanger: {
-    color: colors.foreground,
-  },
-  warningCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.warning,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
     gap: spacing.md,
   },
   warningTitle: {
