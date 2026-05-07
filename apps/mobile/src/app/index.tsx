@@ -126,7 +126,7 @@ export default function HomeScreen() {
           Start Focus Session
         </Link>
 
-        <Link href={'/selection-test'} style={styles.linkCard}>
+        <Link href={'/selection'} style={styles.linkCard}>
           Current Selection
         </Link>
 

@@ -1,3 +1,15 @@
+export const fontFamilies = {
+  sans: {
+    regular: 'Geist-Regular',
+    medium: 'Geist-Medium',
+    semibold: 'Geist-SemiBold',
+  },
+  mono: {
+    regular: 'GeistMono-Regular',
+    medium: 'GeistMono-Medium',
+  },
+} as const;
+
 export const typography = {
   hero: 40,
   title: 28,

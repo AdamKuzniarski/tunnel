@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
 export function MetricCard({ label, value }: { label: string; value: string | number }) {
   return (
     <View style={styles.metricCard}>
@@ -22,6 +22,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontSize: 28,
     fontWeight: '700',
+    fontFamily: fontFamilies.mono.medium,
   },
   metricLabel: {
     color: colors.muted,

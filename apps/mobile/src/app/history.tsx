@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import type { SessionHistoryEntry } from '@/types/sessionHistory';
-import { colors, spacing, typography } from '@/theme';
+import { colors, fontFamilies, spacing, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
 import { SectionTitle } from '@/components/ui/SectionTitle';
@@ -107,6 +107,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontSize: typography.sectionTitle,
     fontWeight: '700',
+    fontFamily: fontFamilies.mono.medium,
   },
   bodyText: {
     color: colors.muted,

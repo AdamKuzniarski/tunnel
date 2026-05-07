@@ -10,7 +10,7 @@ import {
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, radius, spacing, typography, fontFamilies } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
 import { AppButton } from '@/components/ui/AppButton';
@@ -449,11 +449,13 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontSize: typography.title,
     fontWeight: '700',
+    fontFamily: fontFamilies.sans.semibold,
   },
   subtitle: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
   statusBadge: {
     borderWidth: 1,
@@ -484,12 +486,14 @@ const styles = StyleSheet.create({
     fontSize: typography.label,
     fontWeight: '600',
     textTransform: 'uppercase',
+    fontFamily: fontFamilies.sans.medium,
   },
   countdownText: {
     color: colors.foreground,
     fontSize: 56,
     fontWeight: '700',
     letterSpacing: -2,
+    fontFamily: fontFamilies.mono.medium,
   },
   cardHint: {
     color: colors.muted,
@@ -543,6 +547,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontSize: 28,
     fontWeight: '700',
+    fontFamily: fontFamilies.mono.medium,
   },
   metricLabel: {
     color: colors.muted,
