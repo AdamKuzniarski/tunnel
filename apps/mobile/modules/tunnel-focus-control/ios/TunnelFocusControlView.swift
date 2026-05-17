@@ -35,7 +35,7 @@ class TunnelFocusControlView: ExpoView {
 
 @available(iOS 16.0, *)
 struct SelectionPickerContainer: View {
-    @State private var selection = FamilyActivitySelection()
+    @State private var selection = TunnelSelectionStore.shared.selection
     let onSelectionChange: ([String: Any]) -> Void
 
     var body: some View {
@@ -49,19 +49,8 @@ struct SelectionPickerContainer: View {
     }
 
     private func sendSummary() {
-        TunnelFocusControlModule.currentSelection = selection
-
-        let applicationCount = selection.applicationTokens.count
-        let categoryCount = selection.categoryTokens.count
-        let webDomainCount = selection.webDomainTokens.count
-
-        let summary: [String: Any] = [
-            "hasSelection": applicationCount > 0 || categoryCount > 0 || webDomainCount > 0,
-            "applicationCount": applicationCount,
-            "categoryCount": categoryCount,
-            "webDomainCount": webDomainCount
-        ]
-
+TunnelSlectionStore.shared.update(selection)
+let summary = TunnelSelectionStore.shared.summary()
         onSelectionChange(summary)
     }
 }
