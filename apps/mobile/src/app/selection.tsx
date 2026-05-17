@@ -141,7 +141,7 @@ export default function SelectionTestScreen() {
         <AppButton
           label="Apply Shield"
           onPress={handleApplyShield}
-          disabled={loading}
+          disabled={loading || !hasSelection}
           variant="primary"
         />
 

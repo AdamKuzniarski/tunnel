@@ -1,6 +1,6 @@
-import { registerWebModule, NativeModule } from 'expo';
+import { NativeModule, registerWebModule } from 'expo';
 
-import {
+import type {
   TunnelAuthorizationStatus,
   TunnelFocusControlModuleEvents,
   TunnelSelectionSummary,
@@ -8,14 +8,12 @@ import {
 } from './TunnelFocusControl.types';
 
 class TunnelFocusControlModule extends NativeModule<TunnelFocusControlModuleEvents> {
-  PI = Math.PI;
-  async setValueAsync(value: string): Promise<void> {
-    this.emit('onChange', { value });
+  async getAuthorizationStatus(): Promise<TunnelAuthorizationStatus> {
+    return 'unsupported';
   }
 
-  async getAuthorizationStatus(): Promise<TunnelAuthorizationStatus> {
-    // FamilyControls doesn't exist on web; return a stable fallback.
-    return 'notDetermined';
+  async requestAuthorization(): Promise<TunnelAuthorizationStatus> {
+    return 'unsupported';
   }
 
   async applyShield(): Promise<TunnelShieldResult> {
@@ -42,9 +40,6 @@ class TunnelFocusControlModule extends NativeModule<TunnelFocusControlModuleEven
       categoryCount: 0,
       webDomainCount: 0,
     };
-  }
-  hello() {
-    return 'Hello world!';
   }
 }
 

@@ -49,8 +49,8 @@ struct SelectionPickerContainer: View {
     }
 
     private func sendSummary() {
-TunnelSlectionStore.shared.update(selection)
-let summary = TunnelSelectionStore.shared.summary()
+        TunnelSelectionStore.shared.update(selection)
+        let summary = TunnelSelectionStore.shared.summary()
         onSelectionChange(summary)
     }
 }

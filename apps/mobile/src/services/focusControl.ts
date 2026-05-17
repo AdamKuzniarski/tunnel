@@ -1,8 +1,10 @@
-import TunnelFocusControlModule, {
+import TunnelFocusControlModule from '../../modules/tunnel-focus-control';
+
+import type {
+  TunnelAuthorizationStatus,
   TunnelSelectionSummary,
   TunnelShieldResult,
 } from '../../modules/tunnel-focus-control';
-import type { TunnelAuthorizationStatus } from '../../modules/tunnel-focus-control/src/TunnelFocusControl.types';
 
 export async function getAuthorizationStatus(): Promise<TunnelAuthorizationStatus> {
   return TunnelFocusControlModule.getAuthorizationStatus();
