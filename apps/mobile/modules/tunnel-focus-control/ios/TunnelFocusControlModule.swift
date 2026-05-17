@@ -3,15 +3,40 @@ import FamilyControls
 import ManagedSettings
 
 public class TunnelFocusControlModule: Module {
-    @available(iOS 16.0, *)
-    static var currentSelection = FamilyActivitySelection()
-
     private let managedSettingsStore = ManagedSettingsStore(
         named: ManagedSettingsStore.Name("tunnel")
     )
 
     public func definition() -> ModuleDefinition {
         Name("TunnelFocusControl")
+
+        AsyncFunction("getSelectionSummary") { () -> [String: Any] in
+            guard #available(iOS 16.0, *) else {
+                return [
+                    "hasSelection": false,
+                    "applicationCount": 0,
+                    "categoryCount": 0,
+                    "webDomainCount": 0
+                ]
+            }
+
+            return TunnelSelectionStore.shared.summary()
+        }
+
+        AsyncFunction("clearSelection") { () -> [String: Any] in
+            guard #available(iOS 16.0, *) else {
+                return [
+                    "hasSelection": false,
+                    "applicationCount": 0,
+                    "categoryCount": 0,
+                    "webDomainCount": 0
+                ]
+            }
+
+            TunnelSelectionStore.shared.clear()
+            self.managedSettingsStore.clearAllSettings()
+            return TunnelSelectionStore.shared.summary()
+        }
 
         AsyncFunction("getAuthorizationStatus") { () async -> String in
             guard #available(iOS 16.0, *) else {
@@ -69,7 +94,7 @@ private extension TunnelFocusControlModule {
     }
 
     func applyShield() -> String {
-        let selection = TunnelFocusControlModule.currentSelection
+        let selection = TunnelSelectionStore.shared.selection
 
         guard hasSelection(selection) else {
             managedSettingsStore.clearAllSettings()
@@ -77,16 +102,16 @@ private extension TunnelFocusControlModule {
         }
 
         managedSettingsStore.shield.applications =
-        selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
+            selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
 
         managedSettingsStore.shield.webDomains =
-        selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+            selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
 
         managedSettingsStore.shield.applicationCategories =
-        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+            selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
 
         managedSettingsStore.shield.webDomainCategories =
-        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+            selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
 
         return "applied"
     }

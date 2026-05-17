@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TunnelFocusControlView } from '../../modules/tunnel-focus-control';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { applyShield, clearShield } from '@/services/focusControl';
 import {
-  clearSelectionSummary,
-  loadSelectionSummary,
-  saveSelectionSummary,
-} from '../services/sessionStorage';
+  applyShield,
+  clearShield,
+  clearSelection,
+  getSelectionSummary,
+} from '@/services/focusControl';
 import { colors, radius, spacing, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
@@ -28,13 +28,13 @@ export default function SelectionTestScreen() {
         setLoading(true);
         setError('');
 
-        const storedSummary = await loadSelectionSummary();
-        setSummary(storedSummary);
+        const nativeSummary = await getSelectionSummary();
+        setSummary(nativeSummary);
 
-        if (storedSummary) {
-          setLastAction('Loaded stored selection summary.');
+        if (nativeSummary.hasSelection) {
+          setLastAction('Loaded native selection.');
         } else {
-          setLastAction('No stored selection summary found.');
+          setLastAction('No native selection found.');
         }
       } catch (err) {
         console.log('loadSelectionSummary error:', err);
@@ -51,8 +51,7 @@ export default function SelectionTestScreen() {
     try {
       setError('');
       setSummary(nextSummary);
-      await saveSelectionSummary(nextSummary);
-      setLastAction('Updated and stored selection summary.');
+      setLastAction('Updated native selection.');
     } catch (err) {
       console.log('saveSelectionSummary error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -62,9 +61,9 @@ export default function SelectionTestScreen() {
   async function handleClearSelection() {
     try {
       setError('');
-      await clearSelectionSummary();
-      setSummary(null);
-      setLastAction('Cleared stored selection summary.');
+      const nextSummary = await clearSelection();
+      setSummary(nextSummary);
+      setLastAction('Cleared native selection.');
     } catch (err) {
       console.log('clearSelectionSummary error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -142,7 +141,7 @@ export default function SelectionTestScreen() {
         <AppButton
           label="Apply Shield"
           onPress={handleApplyShield}
-          disabled={loading}
+          disabled={loading || !hasSelection}
           variant="primary"
         />
 
@@ -154,7 +153,7 @@ export default function SelectionTestScreen() {
         />
 
         <AppButton
-          label="Clear Stored Selection"
+          label="Clear Selection"
           onPress={handleClearSelection}
           disabled={loading}
           variant="secondary"
