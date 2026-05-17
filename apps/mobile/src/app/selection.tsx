@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { TunnelFocusControlView } from '../../modules/tunnel-focus-control';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
+import { clearSelectionSummary, saveSelectionSummary } from '@/services/sessionStorage';
 import {
   applyShield,
   clearShield,
@@ -30,6 +31,7 @@ export default function SelectionTestScreen() {
 
         const nativeSummary = await getSelectionSummary();
         setSummary(nativeSummary);
+        await saveSelectionSummary(nativeSummary);
 
         if (nativeSummary.hasSelection) {
           setLastAction('Loaded native selection.');
@@ -51,9 +53,10 @@ export default function SelectionTestScreen() {
     try {
       setError('');
       setSummary(nextSummary);
+      await saveSelectionSummary(nextSummary);
       setLastAction('Updated native selection.');
     } catch (err) {
-      console.log('saveSelectionSummary error', err);
+      console.log('handleSelectionChange error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     }
   }
@@ -63,9 +66,10 @@ export default function SelectionTestScreen() {
       setError('');
       const nextSummary = await clearSelection();
       setSummary(nextSummary);
+      await clearSelectionSummary();
       setLastAction('Cleared native selection.');
     } catch (err) {
-      console.log('clearSelectionSummary error', err);
+      console.log('handleClearSelection error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     }
   }
