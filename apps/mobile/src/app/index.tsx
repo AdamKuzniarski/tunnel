@@ -1,18 +1,24 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { loadSelectionSummary, loadActiveSession } from '@/services/sessionStorage';
-import { loadSessionHistory } from '@/services/sessionHistoryStorage';
-import { FocusSession } from '@/types/session';
-import { SessionHistoryEntry } from '@/types/sessionHistory';
-import { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { colors, spacing, typography } from '../theme';
-import { Screen } from '@/components/ui/Screen';
+
 import { Card } from '@/components/ui/Card';
-import { StatCard } from '@/components/ui/StatCard';
+import { Screen } from '@/components/ui/Screen';
 import { SectionTitle } from '@/components/ui/SectionTitle';
+import { StatCard } from '@/components/ui/StatCard';
+import { getSelectionSummary } from '@/services/focusControl';
+import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
+import { loadSessionHistory } from '@/services/sessionHistoryStorage';
+import { loadActiveSession } from '@/services/sessionStorage';
+import { colors, spacing, typography } from '@/theme';
+
+import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
+import type { FocusSession } from '@/types/session';
+import type { SessionHistoryEntry } from '@/types/sessionHistory';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   const [activeSession, setActiveSession] = useState<FocusSession | null>(null);
   const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
   const [history, setHistory] = useState<SessionHistoryEntry[]>([]);
@@ -25,22 +31,29 @@ export default function HomeScreen() {
       setLoading(true);
       setError('');
 
-      const [storedSession, storedSelection, storedHistory] = await Promise.all([
+      const onboardingCompleted = await loadOnboardingCompleted();
+
+      if (!onboardingCompleted) {
+        router.replace('/onboarding');
+        return;
+      }
+
+      const [storedSession, nativeSelection, storedHistory] = await Promise.all([
         loadActiveSession(),
-        loadSelectionSummary(),
+        getSelectionSummary(),
         loadSessionHistory(),
       ]);
 
       setActiveSession(storedSession);
-      setSelectionSummary(storedSelection);
+      setSelectionSummary(nativeSelection);
       setHistory(storedHistory);
     } catch (err) {
-      console.log(`loadDashboard error:`, err);
+      console.log('loadDashboard error:', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useFocusEffect(
     useCallback(() => {
@@ -66,11 +79,13 @@ export default function HomeScreen() {
     if (!activeSession || activeSession.status !== 'active' || activeSession.endsAt <= now) {
       return 'idle';
     }
+
     const remainingMs = Math.max(activeSession.endsAt - now, 0);
     const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
 
     return `${remainingMinutes} minutes left`;
   }, [activeSession, now]);
+
   const sessionStatusHint = useMemo(() => {
     if (!activeSession || activeSession.status !== 'active' || activeSession.endsAt <= now) {
       return 'No focus session is running right now.';
@@ -104,40 +119,41 @@ export default function HomeScreen() {
         <Text style={styles.cardLabel}>Overview</Text>
         <Text style={styles.cardValue}>Focus dashboard</Text>
         <Text style={styles.cardText}>
-          Your current, session, selection, state, and recent activity in one place.
+          Your current session, selection state, and recent activity in one place.
         </Text>
       </Card>
 
       <View style={styles.stats}>
-        <StatCard label={'Session'} value={sessionStatusValue} hint={sessionStatusHint} />
-        <StatCard label={'Selection'} value={selectionValue} hint={selectionHint} />
-        <StatCard label={'Latest'} value={latestHistoryValue} hint={latestHistoryHint} />
+        <StatCard label="Session" value={sessionStatusValue} hint={sessionStatusHint} />
+        <StatCard label="Selection" value={selectionValue} hint={selectionHint} />
+        <StatCard label="Latest" value={latestHistoryValue} hint={latestHistoryHint} />
         <StatCard
-          label={'Emergency unlocks'}
+          label="Emergency unlocks"
           value={String(emergencyUnlockCount)}
-          hint={'Counted from recorded session history'}
+          hint="Counted from recorded session history"
         />
       </View>
 
       <View style={styles.section}>
         <SectionTitle>Main actions</SectionTitle>
 
-        <Link href={'/focus-session'} style={styles.linkCard}>
+        <Link href="/focus-session" style={styles.linkCard}>
           Start Focus Session
         </Link>
 
-        <Link href={'/selection'} style={styles.linkCard}>
+        <Link href="/selection" style={styles.linkCard}>
           Current Selection
         </Link>
 
-        <Link href={'/history'} style={styles.linkCard}>
+        <Link href="/history" style={styles.linkCard}>
           History
         </Link>
 
-        <Link href={'/settings'} style={styles.linkCard}>
+        <Link href="/settings" style={styles.linkCard}>
           Settings
         </Link>
       </View>
+
       {loading ? <Text style={styles.info}>Loading dashboard...</Text> : null}
       {error ? <Text style={styles.error}>Error: {error}</Text> : null}
     </Screen>

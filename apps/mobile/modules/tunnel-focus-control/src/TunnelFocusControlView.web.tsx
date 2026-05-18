@@ -14,7 +14,5 @@ export default function TunnelFocusControlView(props: TunnelFocusControlViewProp
     });
   }, [props.onSelectionChange]);
 
-  return (
-    <div style={{ width: '100%', minHeight: 240 }} />
-  );
+  return <div style={{ width: '100%', minHeight: 240 }} />;
 }

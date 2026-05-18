@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
-import { applyShield, clearShield } from '@/services/focusControl';
+import { applyShield, clearShield, getSelectionSummary } from '@/services/focusControl';
 import {
   clearActiveSession,
   loadActiveSession,
-  loadSelectionSummary,
   saveActiveSession,
 } from '@/services/sessionStorage';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
@@ -60,12 +59,12 @@ export default function FocusSessionScreen() {
         setLoading(true);
         setError('');
 
-        const [storedSession, storedSelectionSummary] = await Promise.all([
+        const [storedSession, nativeSelectionSummary] = await Promise.all([
           loadActiveSession(),
-          loadSelectionSummary(),
+          getSelectionSummary(),
         ]);
 
-        setSelectionSummary(storedSelectionSummary);
+        setSelectionSummary(nativeSelectionSummary);
 
         if (!storedSession) {
           setLastAction('No active session found.');
@@ -231,6 +230,14 @@ export default function FocusSessionScreen() {
       setLoading(true);
       setError('');
       resetUnlockFlow();
+
+      const nativeSelectionSummary = await getSelectionSummary();
+      setSelectionSummary(nativeSelectionSummary);
+
+      if (!nativeSelectionSummary.hasSelection) {
+        setLastAction('No blocklist selected. Go to Curren Selection first.');
+        return;
+      }
 
       const shieldResult = await applyShield();
 

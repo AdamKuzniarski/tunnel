@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
 import { TunnelFocusControlView } from '../../modules/tunnel-focus-control';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import { clearSelectionSummary, saveSelectionSummary } from '@/services/sessionStorage';
-import {
-  applyShield,
-  clearShield,
-  clearSelection,
-  getSelectionSummary,
-} from '@/services/focusControl';
+
+import { clearSelection, getSelectionSummary } from '@/services/focusControl';
 import { colors, radius, spacing, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
@@ -16,12 +13,17 @@ import { SectionTitle } from '@/components/ui/SectionTitle';
 import { AppButton } from '@/components/ui/AppButton';
 import { MetricCard } from '@/components/ui/MetricCard';
 
-export default function SelectionTestScreen() {
+type SelectionReturnTarget = 'onboarding' | 'focus-session' | 'home';
+
+export default function SelectionScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ returnTo?: SelectionReturnTarget }>();
+
   const [summary, setSummary] = useState<TunnelSelectionSummary | null>(null);
-  const [shieldStatus, setShieldStatus] = useState('No shield action yet.');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lastAction, setLastAction] = useState('No action yet.');
+  const [pickerVersion, setPickerVersion] = useState(0);
 
   useEffect(() => {
     const initializeSelection = async () => {
@@ -31,7 +33,6 @@ export default function SelectionTestScreen() {
 
         const nativeSummary = await getSelectionSummary();
         setSummary(nativeSummary);
-        await saveSelectionSummary(nativeSummary);
 
         if (nativeSummary.hasSelection) {
           setLastAction('Loaded native selection.');
@@ -39,7 +40,7 @@ export default function SelectionTestScreen() {
           setLastAction('No native selection found.');
         }
       } catch (err) {
-        console.log('loadSelectionSummary error:', err);
+        console.log('initializeSelection error:', err);
         setError(err instanceof Error ? err.message : JSON.stringify(err));
       } finally {
         setLoading(false);
@@ -50,50 +51,41 @@ export default function SelectionTestScreen() {
   }, []);
 
   async function handleSelectionChange(nextSummary: TunnelSelectionSummary) {
-    try {
-      setError('');
-      setSummary(nextSummary);
-      await saveSelectionSummary(nextSummary);
-      setLastAction('Updated native selection.');
-    } catch (err) {
-      console.log('handleSelectionChange error', err);
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
-    }
+    setError('');
+    setSummary(nextSummary);
+    setLastAction('Updated native selection.');
   }
 
   async function handleClearSelection() {
     try {
+      setLoading(true);
       setError('');
+
       const nextSummary = await clearSelection();
+
       setSummary(nextSummary);
-      await clearSelectionSummary();
+      setPickerVersion((currentVersion) => currentVersion + 1);
       setLastAction('Cleared native selection.');
     } catch (err) {
       console.log('handleClearSelection error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
+    } finally {
+      setLoading(false);
     }
   }
 
-  async function handleApplyShield() {
-    try {
-      setError('');
-      const result = await applyShield();
-      setShieldStatus(`Apply shield result: ${result}`);
-    } catch (err) {
-      console.log('applyShield error', err);
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
+  function handleDone() {
+    if (params.returnTo === 'onboarding') {
+      router.replace('/onboarding');
+      return;
     }
-  }
 
-  async function handleClearShield() {
-    try {
-      setError('');
-      const result = await clearShield();
-      setShieldStatus(`Clear shield result: ${result}`);
-    } catch (err) {
-      console.log('clearShield error', err);
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    if (params.returnTo === 'focus-session') {
+      router.replace('/focus-session');
+      return;
     }
+
+    router.replace('/');
   }
 
   const hasSelection = summary?.hasSelection ?? false;
@@ -103,7 +95,10 @@ export default function SelectionTestScreen() {
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>Selection</Text>
         <Text style={styles.title}>Current Selection</Text>
-        <Text style={styles.subtitle}>Choose what tunnel should block during a focus session.</Text>
+        <Text style={styles.subtitle}>
+          Choose what tunnel should block during a focus session. The selection is saved
+          automatically.
+        </Text>
       </View>
 
       <Card>
@@ -111,8 +106,8 @@ export default function SelectionTestScreen() {
         <Text style={styles.cardValue}>{hasSelection ? 'Ready' : 'Not ready'}</Text>
         <Text style={styles.cardHint}>
           {hasSelection
-            ? 'A stored blocklist is available for focus mode.'
-            : 'No stored selection yet. Pick apps, categories, or web domains below.'}
+            ? 'A native blocklist is available for focus mode.'
+            : 'No selection yet. Pick apps, categories, or web domains below.'}
         </Text>
       </Card>
 
@@ -127,39 +122,22 @@ export default function SelectionTestScreen() {
       </Card>
 
       <Card>
-        <Text style={styles.cardLabel}>Shield status</Text>
-        <Text style={styles.statusText}>{shieldStatus}</Text>
-      </Card>
-
-      <Card>
         <Text style={styles.cardLabel}>Status</Text>
         <Text style={styles.statusText}>{lastAction}</Text>
 
-        {loading ? <Text style={styles.infoText}>Loading stored selection...</Text> : null}
+        {loading ? <Text style={styles.infoText}>Working...</Text> : null}
         {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
       </Card>
 
       <View style={styles.actionsSection}>
         <SectionTitle>Main actions</SectionTitle>
 
-        <AppButton
-          label="Apply Shield"
-          onPress={handleApplyShield}
-          disabled={loading || !hasSelection}
-          variant="primary"
-        />
-
-        <AppButton
-          label="Clear Shield"
-          onPress={handleClearShield}
-          disabled={loading}
-          variant="secondary"
-        />
+        <AppButton label="Done" onPress={handleDone} disabled={loading} variant="primary" />
 
         <AppButton
           label="Clear Selection"
           onPress={handleClearSelection}
-          disabled={loading}
+          disabled={loading || !hasSelection}
           variant="secondary"
         />
       </View>
@@ -168,6 +146,7 @@ export default function SelectionTestScreen() {
         <Text style={styles.cardLabel}>Picker</Text>
         <View style={styles.pickerContainer}>
           <TunnelFocusControlView
+            key={pickerVersion}
             style={styles.picker}
             onSelectionChange={(event) => {
               void handleSelectionChange(event.nativeEvent);
@@ -219,25 +198,6 @@ const styles = StyleSheet.create({
   metricsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  metricValue: {
-    color: colors.foreground,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  metricLabel: {
-    color: colors.muted,
-    fontSize: typography.label,
-    fontWeight: '600',
   },
   statusText: {
     color: colors.foreground,

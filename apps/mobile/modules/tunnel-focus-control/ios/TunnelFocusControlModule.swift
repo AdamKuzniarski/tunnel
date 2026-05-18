@@ -35,6 +35,7 @@ public class TunnelFocusControlModule: Module {
 
             TunnelSelectionStore.shared.clear()
             self.managedSettingsStore.clearAllSettings()
+
             return TunnelSelectionStore.shared.summary()
         }
 
@@ -46,12 +47,12 @@ public class TunnelFocusControlModule: Module {
             return await self.currentAuthorizationStatus()
         }
 
-        AsyncFunction("requestAuthorization") { () async throws -> String in
+        AsyncFunction("requestAuthorization") { () async -> String in
             guard #available(iOS 16.0, *) else {
                 return "unsupported"
             }
 
-            return try await self.requestAuthorization()
+            return await self.requestAuthorization()
         }
 
         View(TunnelFocusControlView.self) {
@@ -76,21 +77,36 @@ public class TunnelFocusControlModule: Module {
 @available(iOS 16.0, *)
 private extension TunnelFocusControlModule {
     func currentAuthorizationStatus() async -> String {
+        #if targetEnvironment(simulator)
+        return "unsupported"
+        #else
         let status = await MainActor.run {
             AuthorizationCenter.shared.authorizationStatus
         }
 
         return mapAuthorizationStatus(status)
+        #endif
     }
 
-    func requestAuthorization() async throws -> String {
+    func requestAuthorization() async -> String {
+        #if targetEnvironment(simulator)
+        return "unsupported"
+        #else
         do {
             try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
             return await currentAuthorizationStatus()
         } catch {
             print("FamilyControls requestAuthorization error: \(error)")
-            throw error
+
+            let statusAfterError = await currentAuthorizationStatus()
+
+            if statusAfterError == "notDetermined" {
+                return "unknown"
+            }
+
+            return statusAfterError
         }
+        #endif
     }
 
     func applyShield() -> String {
@@ -102,16 +118,16 @@ private extension TunnelFocusControlModule {
         }
 
         managedSettingsStore.shield.applications =
-            selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
+        selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
 
         managedSettingsStore.shield.webDomains =
-            selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
+        selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
 
         managedSettingsStore.shield.applicationCategories =
-            selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
 
         managedSettingsStore.shield.webDomainCategories =
-            selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
+        selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens, except: [])
 
         return "applied"
     }

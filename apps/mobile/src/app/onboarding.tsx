@@ -196,7 +196,9 @@ export default function OnboardingScreen() {
 
         <AppButton
           label={selectionReady ? 'Update Selection' : 'Choose Selection'}
-          onPress={() => router.push('/selection')}
+          onPress={() =>
+            router.push({ pathname: '/selection', params: { returnTo: 'onboarding' } })
+          }
           disabled={loading || !authorizationReady}
           variant={selectionReady ? 'secondary' : 'primary'}
         />

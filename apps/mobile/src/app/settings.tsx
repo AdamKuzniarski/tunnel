@@ -2,10 +2,23 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, spacing, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
+import { AppButton } from '@/components/ui/AppButton';
+import { resetOnboardingCompleted } from '@/services/onBoardingStorage';
+import { router } from 'expo-router';
 
 export default function SettingsScreen() {
   return (
     <Screen>
+      {__DEV__ ? (
+        <AppButton
+          label="Reset Onboarding"
+          onPress={async () => {
+            await resetOnboardingCompleted();
+            router.replace('/onboarding');
+          }}
+          variant="secondary"
+        />
+      ) : null}
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>Settings</Text>
         <Text style={styles.title}>Settings</Text>
