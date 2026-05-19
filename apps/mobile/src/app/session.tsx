@@ -1,23 +1,29 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { Screen } from '@/components/ui/Screen';
+import { Section } from '@/components/ui/Section';
+import { colors, fontFamilies, typography } from '@/theme';
 
 export default function SessionScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Focus Session</Text>
-      <Text>This is a placeholder screen for starting and managing a session.</Text>
-    </View>
+    <Screen>
+      <Section
+        eyebrow="Session"
+        title="Focus session"
+        description="Start and manage a focus session from this screen."
+      />
+
+      <Section bordered eyebrow="State" title="Placeholder">
+        <Text style={styles.bodyText}>This route is reserved for future session controls.</Text>
+      </Section>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    gap: 12,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
+  bodyText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
 });

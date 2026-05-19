@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, spacing, typography } from '@/theme';
+import { StyleSheet, Text } from 'react-native';
+import { colors, fontFamilies, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
-import { Card } from '@/components/ui/Card';
+import { Section } from '@/components/ui/Section';
 import { AppButton } from '@/components/ui/AppButton';
 import { resetOnboardingCompleted } from '@/services/onBoardingStorage';
 import { router } from 'expo-router';
@@ -9,71 +9,40 @@ import { router } from 'expo-router';
 export default function SettingsScreen() {
   return (
     <Screen>
-      {__DEV__ ? (
-        <AppButton
-          label="Reset Onboarding"
-          onPress={async () => {
-            await resetOnboardingCompleted();
-            router.replace('/onboarding');
-          }}
-          variant="secondary"
-        />
-      ) : null}
-      <View style={styles.hero}>
-        <Text style={styles.eyebrow}>Settings</Text>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.subtitle}>
-          This area will hold app preferences and product options later.
-        </Text>
-      </View>
+      <Section
+        eyebrow="Settings"
+        title="App settings"
+        description="This area will hold app preferences and product options later."
+      />
 
-      <Card>
-        <Text style={styles.cardLabel}>Current state</Text>
-        <Text style={styles.cardValue}>Placeholder</Text>
-        <Text style={styles.cardText}>
+      <Section bordered eyebrow="Current state" title="Placeholder">
+        <Text style={styles.bodyText}>
           tunnel settings are not implemented yet. This screen exists so the app shell already feels
           complete.
         </Text>
-      </Card>
+      </Section>
+
+      {__DEV__ ? (
+        <Section bordered eyebrow="Developer" title="Debug tools">
+          <AppButton
+            label="Reset onboarding"
+            onPress={async () => {
+              await resetOnboardingCompleted();
+              router.replace('/onboarding');
+            }}
+            variant="quiet"
+          />
+        </Section>
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: spacing['2xl'],
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.foreground,
-    fontSize: typography.title,
-    fontWeight: '700',
-  },
-  subtitle: {
+  bodyText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
-  },
-  cardLabel: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  cardValue: {
-    color: colors.foreground,
-    fontSize: typography.sectionTitle,
-    fontWeight: '700',
-  },
-  cardText: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
 });

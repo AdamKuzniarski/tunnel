@@ -2,15 +2,14 @@ import { Link, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
-import { SectionTitle } from '@/components/ui/SectionTitle';
+import { Section } from '@/components/ui/Section';
 import { StatCard } from '@/components/ui/StatCard';
 import { getSelectionSummary } from '@/services/focusControl';
 import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import { loadActiveSession } from '@/services/sessionStorage';
-import { colors, spacing, typography } from '@/theme';
+import { colors, fontFamilies, spacing, typography } from '@/theme';
 
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
 import type { FocusSession } from '@/types/session';
@@ -110,18 +109,9 @@ export default function HomeScreen() {
 
   return (
     <Screen scroll>
-      <View style={styles.hero}>
-        <Text style={styles.brand}>tunnel</Text>
-        <Text style={styles.tagline}>Block the noise. Stay in flow.</Text>
-      </View>
-
-      <Card>
-        <Text style={styles.cardLabel}>Overview</Text>
-        <Text style={styles.cardValue}>Focus dashboard</Text>
-        <Text style={styles.cardText}>
-          Your current session, selection state, and recent activity in one place.
-        </Text>
-      </Card>
+      <Section title="tunnel" description="Stay in flow">
+        <Text style={styles.supportText}>Block the noise and protect focused work.</Text>
+      </Section>
 
       <View style={styles.stats}>
         <StatCard label="Session" value={sessionStatusValue} hint={sessionStatusHint} />
@@ -134,25 +124,23 @@ export default function HomeScreen() {
         />
       </View>
 
-      <View style={styles.section}>
-        <SectionTitle>Main actions</SectionTitle>
-
-        <Link href="/focus-session" style={styles.linkCard}>
-          Start Focus Session
+      <Section title="Main actions" bordered>
+        <Link href="/focus-session" style={styles.linkItem}>
+          Start focus session
         </Link>
 
-        <Link href="/selection" style={styles.linkCard}>
-          Current Selection
+        <Link href="/selection" style={styles.linkItem}>
+          Current selection
         </Link>
 
-        <Link href="/history" style={styles.linkCard}>
+        <Link href="/history" style={styles.linkItem}>
           History
         </Link>
 
-        <Link href="/settings" style={styles.linkCard}>
+        <Link href="/settings" style={styles.linkItem}>
           Settings
         </Link>
-      </View>
+      </Section>
 
       {loading ? <Text style={styles.info}>Loading dashboard...</Text> : null}
       {error ? <Text style={styles.error}>Error: {error}</Text> : null}
@@ -161,60 +149,35 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: spacing['3xl'],
-    gap: spacing.sm,
-  },
-  brand: {
-    color: colors.foreground,
-    fontSize: typography.hero,
-    fontWeight: '700',
-    letterSpacing: -1,
-  },
-  tagline: {
-    color: colors.muted,
-    fontSize: typography.body,
-  },
-  cardLabel: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  cardValue: {
-    color: colors.foreground,
-    fontSize: typography.title,
-    fontWeight: '700',
-  },
-  cardText: {
+  supportText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
   stats: {
     gap: spacing.md,
   },
-  section: {
-    gap: spacing.md,
-  },
-  linkCard: {
+  linkItem: {
     backgroundColor: colors.surface,
     color: colors.foreground,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     borderRadius: 12,
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: typography.body,
-    fontWeight: '600',
+    fontFamily: fontFamilies.sans.medium,
     overflow: 'hidden',
   },
   info: {
     color: colors.muted,
     fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
   },
   error: {
     color: colors.danger,
     fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
   },
 });

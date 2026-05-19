@@ -6,10 +6,9 @@ import { TunnelFocusControlView } from '../../modules/tunnel-focus-control';
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
 
 import { clearSelection, getSelectionSummary } from '@/services/focusControl';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
-import { Card } from '@/components/ui/Card';
-import { SectionTitle } from '@/components/ui/SectionTitle';
+import { Section } from '@/components/ui/Section';
 import { AppButton } from '@/components/ui/AppButton';
 import { MetricCard } from '@/components/ui/MetricCard';
 
@@ -92,58 +91,47 @@ export default function SelectionScreen() {
 
   return (
     <Screen scroll>
-      <View style={styles.hero}>
-        <Text style={styles.eyebrow}>Selection</Text>
-        <Text style={styles.title}>Current Selection</Text>
-        <Text style={styles.subtitle}>
-          Choose what tunnel should block during a focus session. The selection is saved
-          automatically.
-        </Text>
-      </View>
+      <Section
+        eyebrow="Selection"
+        title="Current selection"
+        description="Choose what tunnel should block during a focus session. The selection is saved automatically."
+      />
 
-      <Card>
-        <Text style={styles.cardLabel}>Selection state</Text>
-        <Text style={styles.cardValue}>{hasSelection ? 'Ready' : 'Not ready'}</Text>
-        <Text style={styles.cardHint}>
+      <Section bordered eyebrow="State" title={hasSelection ? 'Ready' : 'Not ready'}>
+        <Text style={styles.statusText}>
           {hasSelection
             ? 'A native blocklist is available for focus mode.'
             : 'No selection yet. Pick apps, categories, or web domains below.'}
         </Text>
-      </Card>
+      </Section>
 
-      <Card>
-        <Text style={styles.cardLabel}>Selection summary</Text>
-
+      <Section bordered eyebrow="Summary" title="Selection coverage">
         <View style={styles.metricsRow}>
           <MetricCard label="Apps" value={summary?.applicationCount ?? 0} />
           <MetricCard label="Categories" value={summary?.categoryCount ?? 0} />
           <MetricCard label="Web" value={summary?.webDomainCount ?? 0} />
         </View>
-      </Card>
+      </Section>
 
-      <Card>
-        <Text style={styles.cardLabel}>Status</Text>
-        <Text style={styles.statusText}>{lastAction}</Text>
-
-        {loading ? <Text style={styles.infoText}>Working...</Text> : null}
-        {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </Card>
-
-      <View style={styles.actionsSection}>
-        <SectionTitle>Main actions</SectionTitle>
-
+      <Section bordered eyebrow="Actions" title="Selection actions">
         <AppButton label="Done" onPress={handleDone} disabled={loading} variant="primary" />
 
         <AppButton
-          label="Clear Selection"
+          label="Clear selection"
           onPress={handleClearSelection}
           disabled={loading || !hasSelection}
           variant="secondary"
         />
-      </View>
+      </Section>
 
-      <Card>
-        <Text style={styles.cardLabel}>Picker</Text>
+      <Section bordered eyebrow="Status" title="Selection activity">
+        <Text style={styles.statusText}>{lastAction}</Text>
+
+        {loading ? <Text style={styles.infoText}>Working...</Text> : null}
+        {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
+      </Section>
+
+      <Section bordered eyebrow="Picker" title="Native picker">
         <View style={styles.pickerContainer}>
           <TunnelFocusControlView
             key={pickerVersion}
@@ -153,48 +141,12 @@ export default function SelectionScreen() {
             }}
           />
         </View>
-      </Card>
+      </Section>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: spacing['2xl'],
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.foreground,
-    fontSize: typography.title,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
-  cardLabel: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  cardValue: {
-    color: colors.foreground,
-    fontSize: typography.sectionTitle,
-    fontWeight: '700',
-  },
-  cardHint: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
   metricsRow: {
     flexDirection: 'row',
     gap: spacing.sm,
@@ -203,23 +155,23 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     fontSize: typography.body,
     lineHeight: 24,
+    fontFamily: fontFamilies.sans.regular,
   },
   infoText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
   },
   errorText: {
     color: colors.danger,
     fontSize: typography.bodySmall,
     lineHeight: 22,
-  },
-  actionsSection: {
-    gap: spacing.md,
+    fontFamily: fontFamilies.sans.regular,
   },
   pickerContainer: {
     minHeight: 420,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSubtle,
     borderRadius: radius.lg,
     overflow: 'hidden',
     backgroundColor: colors.surfaceElevated,

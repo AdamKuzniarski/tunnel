@@ -1,19 +1,19 @@
 export const colors = {
-  background: '#050505',
-  foreground: '#fafafa',
+  background: '#0a0b0d',
+  foreground: '#f5f6f8',
 
-  surface: '#0a0a0a',
-  surfaceElevated: '#111111',
+  surface: '#111317',
+  surfaceElevated: '#171a1f',
 
-  border: '#262626',
-  borderSubtle: '#1a1a1a',
+  border: '#2f3440',
+  borderSubtle: '#242933',
 
-  muted: '#3a3a3a',
-  mutedForeground: '#737373',
+  muted: '#a3acbb',
+  mutedForeground: '#7e8797',
 
   accent: '#ffffff',
 
-  danger: '#ef4444',
-  success: '#22c55e',
+  danger: '#f87171',
+  success: '#34d399',
   warning: '#f59e0b',
 } as const;

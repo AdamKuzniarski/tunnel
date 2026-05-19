@@ -12,9 +12,10 @@ export const fontFamilies = {
 
 export const typography = {
   hero: 40,
-  title: 28,
+  title: 30,
   sectionTitle: 18,
   body: 16,
   bodySmall: 15,
   label: 13,
+  button: 16,
 } as const;
