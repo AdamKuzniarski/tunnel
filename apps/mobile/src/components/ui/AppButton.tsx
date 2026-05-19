@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, radius, spacing, typography } from '@/theme';
+import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
 
 type AppButtonProps = {
   label: string;
   onPress: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'quiet' | 'danger';
 };
 
 export function AppButton({
@@ -22,13 +22,19 @@ export function AppButton({
         styles.base,
         variant === 'primary' && styles.primary,
         variant === 'secondary' && styles.secondary,
+        variant === 'quiet' && styles.quiet,
         variant === 'danger' && styles.danger,
         disabled && styles.disabled,
         pressed && styles.pressed,
       ]}
     >
       <Text
-        style={[styles.text, (variant === 'secondary' || variant === 'danger') && styles.textLight]}
+        style={[
+          styles.text,
+          (variant === 'secondary' || variant === 'quiet' || variant === 'danger') &&
+            styles.textLight,
+          variant === 'quiet' && styles.textQuiet,
+        ]}
       >
         {label}
       </Text>
@@ -39,7 +45,7 @@ export function AppButton({
 const styles = StyleSheet.create({
   base: {
     borderRadius: radius.lg,
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -53,6 +59,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderColor: colors.border,
   },
+  quiet: {
+    backgroundColor: 'transparent',
+    borderColor: colors.borderSubtle,
+  },
   danger: {
     backgroundColor: colors.surface,
     borderColor: colors.danger,
@@ -65,8 +75,11 @@ const styles = StyleSheet.create({
   },
   text: {
     color: colors.background,
-    fontSize: typography.body,
-    fontWeight: '700',
+    fontSize: typography.button,
+    fontFamily: fontFamilies.sans.semibold,
+  },
+  textQuiet: {
+    fontFamily: fontFamilies.sans.medium,
   },
   textLight: {
     color: colors.foreground,
