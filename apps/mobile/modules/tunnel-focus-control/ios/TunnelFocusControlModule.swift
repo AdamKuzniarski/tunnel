@@ -6,6 +6,7 @@ public class TunnelFocusControlModule: Module {
     private let managedSettingsStore = ManagedSettingsStore(
         named: ManagedSettingsStore.Name("tunnel")
     )
+    private let legacyManagedSettingsStore = ManagedSettingsStore()
 
     public func definition() -> ModuleDefinition {
         Name("TunnelFocusControl")
@@ -34,7 +35,7 @@ public class TunnelFocusControlModule: Module {
             }
 
             TunnelSelectionStore.shared.clear()
-            self.managedSettingsStore.clearAllSettings()
+            self.clearShieldSettings()
 
             return TunnelSelectionStore.shared.summary()
         }
@@ -59,23 +60,48 @@ public class TunnelFocusControlModule: Module {
             Events("onSelectionChange")
         }
 
-        AsyncFunction("applyShield") { () -> String in
+        AsyncFunction("applyShield") { () async -> String in
             guard #available(iOS 16.0, *) else {
                 return "unsupported"
             }
-
-            return self.applyShield()
+            return await MainActor.run {
+                let result = self.applyShield()
+                print("[TunnelFocusControl] applyShield result: \(result)")
+                return result
+            }
         }
 
-        AsyncFunction("clearShield") { () -> String in
-            self.managedSettingsStore.clearAllSettings()
-            return "cleared"
+        AsyncFunction("clearShield") { () async -> String in
+            guard #available(iOS 16.0, *) else {
+                return "unsupported"
+            }
+            return await MainActor.run {
+                print("[TunnelFocusControl] clearShield start")
+                self.clearShieldSettings()
+                print("[TunnelFocusControl] clearShield done")
+                return "cleared"
+            }
         }
     }
 }
 
 @available(iOS 16.0, *)
 private extension TunnelFocusControlModule {
+    func clearShieldSettings() {
+        print("[TunnelFocusControl] clearShieldSettings: named + legacy stores")
+        clearShield(in: managedSettingsStore)
+        // Backward compatibility: clear possible leftovers from the unnamed store.
+        clearShield(in: legacyManagedSettingsStore)
+    }
+
+    func clearShield(in store: ManagedSettingsStore) {
+        store.shield.applications = nil
+        store.shield.webDomains = nil
+        store.shield.applicationCategories = nil
+        store.shield.webDomainCategories = nil
+        store.clearAllSettings()
+    }
+
     func currentAuthorizationStatus() async -> String {
         #if targetEnvironment(simulator)
         return "unsupported"
@@ -113,9 +139,11 @@ private extension TunnelFocusControlModule {
         let selection = TunnelSelectionStore.shared.selection
 
         guard hasSelection(selection) else {
-            managedSettingsStore.clearAllSettings()
+            clearShieldSettings()
             return "noSelection"
         }
+
+        clearShieldSettings()
 
         managedSettingsStore.shield.applications =
         selection.applicationTokens.isEmpty ? nil : selection.applicationTokens

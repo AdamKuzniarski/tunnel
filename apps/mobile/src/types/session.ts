@@ -8,4 +8,5 @@ export type FocusSession = {
   startedAt: number;
   endsAt: number;
   status: FocusSessionStatus;
+  unlockAttemptCount?: number;
 };
