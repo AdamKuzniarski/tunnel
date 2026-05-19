@@ -20,13 +20,12 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     color: colors.foreground,
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: typography.title,
     fontFamily: fontFamilies.mono.medium,
   },
   metricLabel: {
     color: colors.muted,
     fontSize: typography.label,
-    fontWeight: '600',
+    fontFamily: fontFamilies.sans.medium,
   },
 });
