@@ -109,12 +109,8 @@ export default function HomeScreen() {
 
   return (
     <Screen scroll>
-      <Section
-        eyebrow="Tunnel"
-        title="Stay in flow"
-        description="Block the noise and protect focused work."
-      >
-        <Text style={styles.brand}>tunnel</Text>
+      <Section title="tunnel" description="Stay in flow">
+        <Text style={styles.supportText}>Block the noise and protect focused work.</Text>
       </Section>
 
       <View style={styles.stats}>
@@ -153,11 +149,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  brand: {
-    color: colors.foreground,
-    fontSize: typography.hero,
-    fontFamily: fontFamilies.sans.semibold,
-    letterSpacing: -1,
+  supportText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
   stats: {
     gap: spacing.md,
