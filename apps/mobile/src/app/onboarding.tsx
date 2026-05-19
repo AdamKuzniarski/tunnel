@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
-import { SectionTitle } from '@/components/ui/SectionTitle';
+import { Section } from '@/components/ui/Section';
 import {
   applyShield,
   clearShield,
@@ -14,7 +13,7 @@ import {
   requestAuthorization,
 } from '@/services/focusControl';
 import { saveOnboardingCompleted } from '@/services/onBoardingStorage';
-import { colors, spacing, typography } from '@/theme';
+import { colors, fontFamilies, typography } from '@/theme';
 
 import type {
   TunnelAuthorizationStatus,
@@ -156,36 +155,34 @@ export default function OnboardingScreen() {
 
   return (
     <Screen scroll>
-      <View style={styles.hero}>
-        <Text style={styles.eyebrow}>Setup</Text>
-        <Text style={styles.title}>Prepare your first tunnel</Text>
-        <Text style={styles.subtitle}>
-          Set up Screen Time permission, choose your blocklist, test the shield, then start your
-          first focused session.
-        </Text>
-      </View>
+      <Section
+        eyebrow="Setup"
+        title="Prepare your first tunnel"
+        description="Set up Screen Time permission, choose your blocklist, test the shield, then start your first focused session."
+      />
 
-      <Card>
-        <Text style={styles.cardLabel}>Step 1</Text>
-        <Text style={styles.cardTitle}>Screen Time Permission</Text>
-        <Text style={styles.cardText}>{permissionText}</Text>
+      <Section
+        bordered
+        eyebrow="Step 1"
+        title="Screen Time permission"
+        description={permissionText}
+      >
         <Text style={styles.statusText}>Current status: {authorizationStatus}</Text>
 
         <AppButton
-          label={authorizationReady ? 'Permission Ready' : 'Request Permission'}
+          label={authorizationReady ? 'Permission ready' : 'Request permission'}
           onPress={handleRequestPermission}
           disabled={loading || authorizationReady || authorizationStatus === 'unsupported'}
           variant={authorizationReady ? 'secondary' : 'primary'}
         />
-      </Card>
+      </Section>
 
-      <Card>
-        <Text style={styles.cardLabel}>Step 2</Text>
-        <Text style={styles.cardTitle}>Choose Blocklist</Text>
-        <Text style={styles.cardText}>
-          Pick the apps, categories, or web domains tunnel should block during focus sessions.
-        </Text>
-
+      <Section
+        bordered
+        eyebrow="Step 2"
+        title="Choose blocklist"
+        description="Pick the apps, categories, or web domains tunnel should block during focus sessions."
+      >
         <Text style={styles.statusText}>
           {selectionReady
             ? `${selectionSummary?.applicationCount ?? 0} apps • ${
@@ -195,23 +192,21 @@ export default function OnboardingScreen() {
         </Text>
 
         <AppButton
-          label={selectionReady ? 'Update Selection' : 'Choose Selection'}
+          label={selectionReady ? 'Update selection' : 'Choose selection'}
           onPress={() =>
             router.push({ pathname: '/selection', params: { returnTo: 'onboarding' } })
           }
           disabled={loading || !authorizationReady}
           variant={selectionReady ? 'secondary' : 'primary'}
         />
-      </Card>
+      </Section>
 
-      <Card>
-        <Text style={styles.cardLabel}>Step 3</Text>
-        <Text style={styles.cardTitle}>Test Shield</Text>
-        <Text style={styles.cardText}>
-          tunnel applies the shield once and clears it again immediately. This proves the native
-          bridge works.
-        </Text>
-
+      <Section
+        bordered
+        eyebrow="Step 3"
+        title="Test shield"
+        description="tunnel applies the shield once and clears it immediately. This verifies the native bridge works."
+      >
         <Text style={styles.statusText}>
           Test status:{' '}
           {testShieldState === 'passed'
@@ -222,90 +217,52 @@ export default function OnboardingScreen() {
         </Text>
 
         <AppButton
-          label={testShieldPassed ? 'Shield Test Passed' : 'Test Shield'}
+          label={testShieldPassed ? 'Shield test passed' : 'Test shield'}
           onPress={handleTestShield}
           disabled={loading || !authorizationReady || !selectionReady || testShieldPassed}
           variant={testShieldPassed ? 'secondary' : 'primary'}
         />
-      </Card>
+      </Section>
 
-      <Card>
-        <Text style={styles.cardLabel}>Step 4</Text>
-        <Text style={styles.cardTitle}>Start First Session</Text>
-        <Text style={styles.cardText}>
-          Once setup is complete, start your first 30-minute tunnel session.
-        </Text>
-
+      <Section
+        bordered
+        eyebrow="Step 4"
+        title="Start first session"
+        description="When setup is complete, start your first 30-minute tunnel session."
+      >
         <AppButton
-          label="Start First 30-Minute Session"
+          label="Start first 30-minute session"
           onPress={handleFinishSetup}
           disabled={loading || !setupComplete}
           variant="primary"
         />
-      </Card>
+      </Section>
 
-      <View style={styles.statusBox}>
-        <SectionTitle>Status</SectionTitle>
+      <Section bordered eyebrow="Status" title="Setup activity">
         <Text style={styles.statusText}>{lastAction}</Text>
         {loading ? <Text style={styles.infoText}>Working...</Text> : null}
         {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </View>
+      </Section>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: spacing['2xl'],
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.foreground,
-    fontSize: typography.title,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: colors.mutedForeground,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
-  cardLabel: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  cardTitle: {
-    color: colors.foreground,
-    fontSize: typography.sectionTitle,
-    fontWeight: '700',
-  },
-  cardText: {
-    color: colors.mutedForeground,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
   statusText: {
     color: colors.foreground,
     fontSize: typography.bodySmall,
     lineHeight: 22,
-  },
-  statusBox: {
-    gap: spacing.md,
+    fontFamily: fontFamilies.sans.regular,
   },
   infoText: {
     color: colors.mutedForeground,
     fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
   },
   errorText: {
     color: colors.danger,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
 });

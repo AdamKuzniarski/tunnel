@@ -27,7 +27,12 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     backgroundColor: colors.background,
-    padding: spacing.xl,
-    gap: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing['2xl'],
+    paddingBottom: spacing['3xl'],
+    gap: spacing.xl,
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
   },
 });

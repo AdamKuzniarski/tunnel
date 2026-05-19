@@ -1,7 +1,11 @@
 import { useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { getAuthorizationStatus, requestAuthorization } from '../services/focusControl';
 import type { TunnelAuthorizationStatus } from '../../modules/tunnel-focus-control';
+import { Screen } from '@/components/ui/Screen';
+import { Section } from '@/components/ui/Section';
+import { AppButton } from '@/components/ui/AppButton';
+import { colors, fontFamilies, typography } from '@/theme';
 
 export default function NativeTestScreen() {
   const [authorizationStatus, setAuthorizationStatus] = useState<TunnelAuthorizationStatus | null>(
@@ -34,7 +38,7 @@ export default function NativeTestScreen() {
 
       const status = await requestAuthorization();
       setAuthorizationStatus(status);
-      setLastAction(`Requested Family Controls authorization.`);
+      setLastAction('Requested Family Controls authorization.');
     } catch (err) {
       console.log('requestAuthorization error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -44,57 +48,51 @@ export default function NativeTestScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Permission Debug</Text>
+    <Screen scroll>
+      <Section
+        eyebrow="Debug"
+        title="Permission debug"
+        description="Use this screen to inspect native authorization state while developing."
+      />
 
-      <Text style={styles.label}>Current status</Text>
-      <Text style={styles.value}>{authorizationStatus ?? 'No status loaded yet.'}</Text>
+      <Section
+        bordered
+        eyebrow="Current status"
+        title={authorizationStatus ?? 'No status loaded yet.'}
+      >
+        <Text style={styles.valueText}>{lastAction}</Text>
+        {loading ? <Text style={styles.infoText}>Loading...</Text> : null}
+        {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
+      </Section>
 
-      <Text style={styles.label}>Last action</Text>
-      <Text style={styles.value}>{lastAction}</Text>
-
-      {loading ? <Text style={styles.info}>Loading...</Text> : null}
-      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
-
-      <View style={styles.buttonGroup}>
-        <Button title={'Get Authorization Status'} onPress={handleGetAuthorizationStatus} />
-      </View>
-
-      <View style={styles.buttonGroup}>
-        <Button title={'Request authorization'} onPress={handleRequestAuthorization} />
-      </View>
-    </View>
+      <Section bordered eyebrow="Actions" title="Native checks">
+        <AppButton label="Get authorization status" onPress={handleGetAuthorizationStatus} />
+        <AppButton
+          label="Request authorization"
+          onPress={handleRequestAuthorization}
+          variant="secondary"
+        />
+      </Section>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 24,
-    justifyContent: 'center',
-    gap: 12,
+  valueText: {
+    color: colors.foreground,
+    fontSize: typography.body,
+    lineHeight: 24,
+    fontFamily: fontFamilies.sans.regular,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
+  infoText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    opacity: 0.7,
-  },
-  value: {
-    fontSize: 18,
-    marginBottom: 8,
-  },
-  info: {
-    fontSize: 16,
-  },
-  error: {
-    fontSize: 16,
-  },
-  buttonGroup: {
-    marginTop: 8,
+  errorText: {
+    color: colors.danger,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
 });
