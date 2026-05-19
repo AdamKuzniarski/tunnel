@@ -12,7 +12,11 @@ import {
   saveActiveSession,
 } from '@/services/sessionStorage';
 import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
-import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
+import type {
+  FocusSession,
+  FocusSessionDurationMinutes,
+  PendingEmergencyUnlock,
+} from '@/types/session';
 import type { EmergencyUnlockReason } from '@/types/sessionHistory';
 
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
@@ -50,6 +54,10 @@ const UNLOCK_REASON_OPTIONS: {
   },
 ];
 
+const UNLOCK_REASON_VALUES = new Set<EmergencyUnlockReason>(
+  UNLOCK_REASON_OPTIONS.map((option) => option.value),
+);
+
 function getUnlockDelaySeconds(attemptCount: number): number {
   if (attemptCount <= 1) {
     return 10;
@@ -70,6 +78,28 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
+}
+
+function normalizePendingEmergencyUnlock(
+  pending: FocusSession['pendingEmergencyUnlock'],
+): PendingEmergencyUnlock | undefined {
+  if (!pending) {
+    return undefined;
+  }
+
+  if (!UNLOCK_REASON_VALUES.has(pending.reason)) {
+    return undefined;
+  }
+
+  if (
+    !Number.isFinite(pending.delaySeconds) ||
+    !Number.isFinite(pending.startedAt) ||
+    !Number.isFinite(pending.unlockAt)
+  ) {
+    return undefined;
+  }
+
+  return pending;
 }
 
 async function clearShieldWithRetry(): Promise<{ ok: boolean; result: string; attempts: number }> {
@@ -205,28 +235,36 @@ export default function FocusSessionScreen() {
   }
   async function runUnlockDelayAndUnlock(
     activeSession: FocusSession,
-    reason: EmergencyUnlockReason,
-    delaySeconds: number,
+    pendingUnlock: PendingEmergencyUnlock,
   ) {
+    const { delaySeconds, reason, unlockAt } = pendingUnlock;
     console.log('[unlock] runUnlockDelayAndUnlock start', {
       reason,
       delaySeconds,
       attempt: activeSession.unlockAttemptCount ?? 1,
+      unlockAt,
     });
     const runId = unlockRunIdRef.current + 1;
     unlockRunIdRef.current = runId;
 
     setUnlockStep('delay');
+    setSelectedUnlockReason(reason);
     setLastAction(`Unlock attempt ${activeSession.unlockAttemptCount ?? 1}. Delay started.`);
 
-    for (let secondsLeft = delaySeconds; secondsLeft > 0; secondsLeft -= 1) {
+    while (true) {
       if (unlockRunIdRef.current !== runId) {
         return;
       }
 
+      const remainingMs = unlockAt - Date.now();
+      if (remainingMs <= 0) {
+        break;
+      }
+
+      const secondsLeft = Math.max(1, Math.ceil(remainingMs / 1000));
       setUnlockCountdown(secondsLeft);
       console.log('[unlock] delay tick', secondsLeft);
-      await sleep(1000);
+      await sleep(Math.min(1000, remainingMs));
     }
 
     if (unlockRunIdRef.current !== runId) {
@@ -260,17 +298,26 @@ export default function FocusSessionScreen() {
       ).length;
       const nextAttemptCount = previousEmergencyUnlockCount + 1;
       const nextDelay = getUnlockDelaySeconds(nextAttemptCount);
+      const unlockDelayStartedAt = Date.now();
 
       const updatedSession: FocusSession = {
         ...session,
         unlockAttemptCount: nextAttemptCount,
+        pendingEmergencyUnlock: {
+          reason,
+          delaySeconds: nextDelay,
+          startedAt: unlockDelayStartedAt,
+          unlockAt: unlockDelayStartedAt + nextDelay * 1000,
+        },
       };
 
       await saveActiveSession(updatedSession);
 
       setSession(updatedSession);
 
-      void runUnlockDelayAndUnlock(updatedSession, reason, nextDelay);
+      if (updatedSession.pendingEmergencyUnlock) {
+        void runUnlockDelayAndUnlock(updatedSession, updatedSession.pendingEmergencyUnlock);
+      }
     } catch (err) {
       console.log('handleSelectUnlockReason error', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -398,10 +445,20 @@ export default function FocusSessionScreen() {
         const normalizedSession: FocusSession = {
           ...storedSession,
           unlockAttemptCount: storedSession.unlockAttemptCount ?? 0,
+          pendingEmergencyUnlock: normalizePendingEmergencyUnlock(
+            storedSession.pendingEmergencyUnlock,
+          ),
         };
 
         setSession(normalizedSession);
         setSelectedDuration(normalizedSession.durationMinutes);
+
+        if (normalizedSession.pendingEmergencyUnlock) {
+          setLastAction('Resuming pending emergency unlock delay.');
+          void runUnlockDelayAndUnlock(normalizedSession, normalizedSession.pendingEmergencyUnlock);
+          return;
+        }
+
         setLastAction('Restored active session from storage.');
       } catch (err) {
         console.log('initializeSession error', err);
@@ -485,6 +542,17 @@ export default function FocusSessionScreen() {
 
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }, [remainingMs]);
+
+  const selectedUnlockReasonLabel = useMemo(() => {
+    if (!selectedUnlockReason) {
+      return null;
+    }
+
+    return (
+      UNLOCK_REASON_OPTIONS.find((option) => option.value === selectedUnlockReason)?.label ??
+      selectedUnlockReason
+    );
+  }, [selectedUnlockReason]);
 
   async function handleStartSession() {
     try {
@@ -724,6 +792,9 @@ export default function FocusSessionScreen() {
             <Text style={styles.warningBody}>
               Unlocking in {unlockCountdown} second{unlockCountdown === 1 ? '' : 's'}...
             </Text>
+            {selectedUnlockReasonLabel ? (
+              <Text style={styles.delayText}>Reason: {selectedUnlockReasonLabel}</Text>
+            ) : null}
             <Text style={styles.delayText}>
               Attempt {session?.unlockAttemptCount ?? 1}. The delay increases when you try again.
             </Text>
