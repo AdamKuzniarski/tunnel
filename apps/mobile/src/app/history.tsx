@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { loadSessionHistory } from '@/services/sessionHistoryStorage';
 import type { SessionHistoryEntry } from '@/types/sessionHistory';
-import { colors, fontFamilies, spacing, typography } from '@/theme';
+import { colors, fontFamilies, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
-import { SectionTitle } from '@/components/ui/SectionTitle';
 import { AppButton } from '@/components/ui/AppButton';
+import { Section } from '@/components/ui/Section';
 
 export default function HistoryScreen() {
   const [entries, setEntries] = useState<SessionHistoryEntry[]>([]);
@@ -57,28 +57,25 @@ export default function HistoryScreen() {
 
   return (
     <Screen scroll>
-      <View style={styles.hero}>
-        <Text style={styles.eyebrow}>History</Text>
-        <Text style={styles.title}>Session History</Text>
-        <Text style={styles.subtitle}>Review completed sessions and emergency unlocks.</Text>
-      </View>
-
-      <View style={styles.actions}>
+      <Section
+        eyebrow="History"
+        title="Session history"
+        description="Review completed sessions and emergency unlocks."
+      >
         <AppButton
-          label={loading ? 'Refreshing...' : 'Refresh History'}
+          label={loading ? 'Refreshing...' : 'Refresh history'}
           onPress={handleRefreshPress}
           disabled={loading}
-          variant="secondary"
+          variant="quiet"
         />
-      </View>
+      </Section>
 
       {!loading && entries.length === 0 ? (
-        <Card>
-          <SectionTitle>No history yet</SectionTitle>
+        <Section bordered eyebrow="State" title="No history yet">
           <Text style={styles.bodyText}>
             Your completed sessions and unlock events will appear here.
           </Text>
-        </Card>
+        </Section>
       ) : null}
 
       {entries.map((entry) => (
@@ -97,53 +94,32 @@ export default function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: spacing['2xl'],
-    gap: spacing.xs,
-  },
-  eyebrow: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.foreground,
-    fontSize: typography.title,
-    fontWeight: '700',
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
-  actions: {
-    gap: spacing.md,
-  },
   cardLabel: {
     color: colors.mutedForeground,
     fontSize: typography.label,
-    fontWeight: '600',
+    fontFamily: fontFamilies.sans.medium,
     textTransform: 'uppercase',
   },
   cardValue: {
     color: colors.foreground,
     fontSize: typography.sectionTitle,
-    fontWeight: '700',
     fontFamily: fontFamilies.mono.medium,
   },
   bodyText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
   infoText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
   },
   errorText: {
     color: colors.danger,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
 });
