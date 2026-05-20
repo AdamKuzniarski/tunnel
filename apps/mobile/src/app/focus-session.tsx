@@ -339,38 +339,48 @@ export default function FocusSessionScreen() {
       console.log('[unlock] clearShield result:', clearShieldStatus.result);
       console.log('[unlock] clearShield attempts:', clearShieldStatus.attempts);
 
-      setSession(null);
-      resetUnlockFlow('emergency_unlock_success_or_terminal');
-
-      try {
-        await clearActiveSession();
-        console.log('[unlock] active session cleared');
-      } catch (err) {
-        console.log('[unlock] clearActiveSession error:', err);
-      }
-
-      try {
-        await appendSessionHistoryEntry({
-          id: `${activeSession.id}-emergency-unlock`,
-          startedAt: activeSession.startedAt,
-          endedAt: Date.now(),
-          durationMinutes: activeSession.durationMinutes,
-          outcome: 'emergency_unlock',
-          unlockReason,
-          unlockAttemptCount: activeSession.unlockAttemptCount,
-        });
-        console.log('[unlock] history entry saved');
-      } catch (err) {
-        console.log('[unlock] appendSessionHistoryEntry error:', err);
-      }
-
       if (clearShieldStatus.ok) {
+        setSession(null);
+        resetUnlockFlow('emergency_unlock_success');
+
+        try {
+          await clearActiveSession();
+          console.log('[unlock] active session cleared');
+        } catch (err) {
+          console.log('[unlock] clearActiveSession error:', err);
+        }
+
+        try {
+          await appendSessionHistoryEntry({
+            id: `${activeSession.id}-emergency-unlock`,
+            startedAt: activeSession.startedAt,
+            endedAt: Date.now(),
+            durationMinutes: activeSession.durationMinutes,
+            outcome: 'emergency_unlock',
+            unlockReason,
+            unlockAttemptCount: activeSession.unlockAttemptCount,
+          });
+          console.log('[unlock] history entry saved');
+        } catch (err) {
+          console.log('[unlock] appendSessionHistoryEntry error:', err);
+        }
+
         router.replace('/');
       } else {
+        const sessionWithoutPendingUnlock: FocusSession = {
+          ...activeSession,
+          pendingEmergencyUnlock: undefined,
+        };
+        setSession(sessionWithoutPendingUnlock);
+        try {
+          await saveActiveSession(sessionWithoutPendingUnlock);
+        } catch (err) {
+          console.log('[unlock] saveActiveSession error after shield clear failure:', err);
+        }
         setError(
           `Shield clear did not confirm success after ${clearShieldStatus.attempts} attempts: ${clearShieldStatus.result}`,
         );
-        router.replace('/');
+        setUnlockStep('reason');
       }
     } catch (err) {
       console.log('[unlock] performEmergencyUnlock error:', err);
