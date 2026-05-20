@@ -6,7 +6,7 @@ import { colors, fontFamilies, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
 import { Card } from '@/components/ui/Card';
 import { AppButton } from '@/components/ui/AppButton';
-import { Section } from '@/components/ui/Section';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export default function HistoryScreen() {
   const [entries, setEntries] = useState<SessionHistoryEntry[]>([]);
@@ -57,25 +57,24 @@ export default function HistoryScreen() {
 
   return (
     <Screen scroll>
-      <Section
+      <PageHeader
         eyebrow="History"
         title="Session history"
         description="Review completed sessions and emergency unlocks."
-      >
-        <AppButton
-          label={loading ? 'Refreshing...' : 'Refresh history'}
-          onPress={handleRefreshPress}
-          disabled={loading}
-          variant="quiet"
-        />
-      </Section>
+        action={
+          <AppButton
+            label={loading ? 'Refreshing...' : 'Refresh history'}
+            onPress={handleRefreshPress}
+            disabled={loading}
+            variant="quiet"
+          />
+        }
+      />
 
       {!loading && entries.length === 0 ? (
-        <Section bordered eyebrow="State" title="No history yet">
-          <Text style={styles.bodyText}>
-            Your completed sessions and unlock events will appear here.
-          </Text>
-        </Section>
+        <Card>
+          <Text style={styles.bodyText}>Your completed sessions and unlock events will appear here.</Text>
+        </Card>
       ) : null}
 
       {entries.map((entry) => (
@@ -99,6 +98,7 @@ const styles = StyleSheet.create({
     fontSize: typography.label,
     fontFamily: fontFamilies.sans.medium,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   cardValue: {
     color: colors.foreground,
