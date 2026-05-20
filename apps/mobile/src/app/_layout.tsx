@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { colors } from '@/theme';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   // Prevent the splash screen from auto-hiding while we load fonts.
@@ -29,18 +30,15 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack
-      screenOptions={{
-        headerBackTitle: 'Back',
-        headerStyle: {
-          backgroundColor: colors.background,
-        },
-        headerTintColor: colors.foreground,
-        headerShadowVisible: false,
-        contentStyle: {
-          backgroundColor: colors.background,
-        },
-      }}
-    />
+    <SafeAreaProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: {
+            backgroundColor: colors.background,
+          },
+        }}
+      />
+    </SafeAreaProvider>
   );
 }
