@@ -73,7 +73,9 @@ export default function HistoryScreen() {
 
       {!loading && entries.length === 0 ? (
         <Card>
-          <Text style={styles.bodyText}>Your completed sessions and unlock events will appear here.</Text>
+          <Text style={styles.bodyText}>
+            Your completed sessions and unlock events will appear here.
+          </Text>
         </Card>
       ) : null}
 

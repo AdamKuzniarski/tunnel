@@ -145,7 +145,7 @@ export default function OnboardingScreen() {
       setError('');
 
       await saveOnboardingCompleted();
-      router.replace('/focus-session');
+      router.replace('/');
     } catch (err) {
       console.log('handleFinishSetup error:', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));

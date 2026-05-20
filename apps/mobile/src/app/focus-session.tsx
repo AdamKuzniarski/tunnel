@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -5,24 +6,16 @@ import { AppButton } from '@/components/ui/AppButton';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
-import { applyShield, clearShield, getSelectionSummary } from '@/services/focusControl';
-import { appendSessionHistoryEntry, loadSessionHistory } from '@/services/sessionHistoryStorage';
+import { clearShield } from '@/services/focusControl';
+import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 import {
   clearActiveSession,
   loadActiveSession,
   saveActiveSession,
 } from '@/services/sessionStorage';
 import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
-import type {
-  FocusSession,
-  FocusSessionDurationMinutes,
-  PendingEmergencyUnlock,
-} from '@/types/session';
+import type { FocusSession, PendingEmergencyUnlock } from '@/types/session';
 import type { EmergencyUnlockReason } from '@/types/sessionHistory';
-
-import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-
-const DURATION_OPTIONS: FocusSessionDurationMinutes[] = [30, 60, 90];
 
 const HOLD_TO_UNLOCK_DURATION_MS = 5000;
 
@@ -69,6 +62,10 @@ function getUnlockDelaySeconds(attemptCount: number): number {
   }
 
   return 60;
+}
+
+function getNextUnlockAttemptCount(session: FocusSession): number {
+  return (session.unlockAttemptCount ?? 0) + 1;
 }
 
 function formatHoldProgress(progressMs: number): string {
@@ -134,11 +131,9 @@ async function clearShieldWithRetry(): Promise<{ ok: boolean; result: string; at
 }
 
 export default function FocusSessionScreen() {
-  const [selectedDuration, setSelectedDuration] = useState<FocusSessionDurationMinutes>(30);
+  const router = useRouter();
   const [session, setSession] = useState<FocusSession | null>(null);
-  const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lastAction, setLastAction] = useState('No action yet.');
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
 
@@ -186,7 +181,6 @@ export default function FocusSessionScreen() {
     setHoldProgressMs(0);
     setSelectedUnlockReason(null);
     holdCompletedRef.current = false;
-    setLastAction('Emergency unlock ritual started.');
   }
 
   function completeHoldToUnlock() {
@@ -195,7 +189,6 @@ export default function FocusSessionScreen() {
     clearHoldTimer();
     setHoldProgressMs(HOLD_TO_UNLOCK_DURATION_MS);
     setUnlockStep('reason');
-    setLastAction('Hold completed. Choose why you want to leave the tunnel.');
   }
 
   function handleHoldStart() {
@@ -209,8 +202,6 @@ export default function FocusSessionScreen() {
     holdStartedAtRef.current = startedAt;
 
     setHoldProgressMs(0);
-    setLastAction('Keep holding to unlock.');
-
     holdIntervalRef.current = setInterval(() => {
       const elapsedMs = Date.now() - startedAt;
       const nextProgressMs = Math.min(elapsedMs, HOLD_TO_UNLOCK_DURATION_MS);
@@ -232,7 +223,6 @@ export default function FocusSessionScreen() {
     clearHoldTimer();
     setHoldProgressMs(0);
     setUnlockStep('hold');
-    setLastAction('Hold cancelled. Keep holding if you really want to unlock.');
   }
   async function runUnlockDelayAndUnlock(
     activeSession: FocusSession,
@@ -242,7 +232,7 @@ export default function FocusSessionScreen() {
     console.log('[unlock] runUnlockDelayAndUnlock start', {
       reason,
       delaySeconds,
-      attempt: activeSession.unlockAttemptCount ?? 1,
+      attempt: activeSession.unlockAttemptCount ?? 0,
       unlockAt,
     });
     const runId = unlockRunIdRef.current + 1;
@@ -250,8 +240,6 @@ export default function FocusSessionScreen() {
 
     setUnlockStep('delay');
     setSelectedUnlockReason(reason);
-    setLastAction(`Unlock attempt ${activeSession.unlockAttemptCount ?? 1}. Delay started.`);
-
     while (true) {
       if (unlockRunIdRef.current !== runId) {
         return;
@@ -293,11 +281,7 @@ export default function FocusSessionScreen() {
       setError('');
       setSelectedUnlockReason(reason);
 
-      const history = await loadSessionHistory();
-      const previousEmergencyUnlockCount = history.filter(
-        (entry) => entry.outcome === 'emergency_unlock',
-      ).length;
-      const nextAttemptCount = previousEmergencyUnlockCount + 1;
+      const nextAttemptCount = getNextUnlockAttemptCount(session);
       const nextDelay = getUnlockDelaySeconds(nextAttemptCount);
       const unlockDelayStartedAt = Date.now();
 
@@ -328,12 +312,10 @@ export default function FocusSessionScreen() {
   function handleCancelEmergencyUnlock() {
     if (unlockStep === 'delay' || unlockStep === 'unlocking') {
       console.log('[unlock] cancel ignored during critical unlock phase', { unlockStep });
-      setLastAction('Unlock in progress. Cancel is disabled in this phase.');
       return;
     }
 
     resetUnlockFlow('user_cancel');
-    setLastAction('Emergency unlock cancelled.');
   }
 
   async function performEmergencyUnlock(
@@ -349,53 +331,60 @@ export default function FocusSessionScreen() {
     try {
       setLoading(true);
       setError('');
-      setLastAction('Unlocking tunnel...');
-
       console.log('[unlock] starting emergency unlock');
       console.log('[unlock] reason:', unlockReason);
-      console.log('[unlock] attempt count:', activeSession.unlockAttemptCount ?? 1);
+      console.log('[unlock] attempt count:', activeSession.unlockAttemptCount ?? 0);
 
       const clearShieldStatus = await clearShieldWithRetry();
       console.log('[unlock] clearShield result:', clearShieldStatus.result);
       console.log('[unlock] clearShield attempts:', clearShieldStatus.attempts);
 
-      setSession(null);
-      resetUnlockFlow('emergency_unlock_success_or_terminal');
-
-      try {
-        await clearActiveSession();
-        console.log('[unlock] active session cleared');
-      } catch (err) {
-        console.log('[unlock] clearActiveSession error:', err);
-      }
-
-      try {
-        await appendSessionHistoryEntry({
-          id: `${activeSession.id}-emergency-unlock`,
-          startedAt: activeSession.startedAt,
-          endedAt: Date.now(),
-          durationMinutes: activeSession.durationMinutes,
-          outcome: 'emergency_unlock',
-          unlockReason,
-          unlockAttemptCount: activeSession.unlockAttemptCount ?? 1,
-        });
-        console.log('[unlock] history entry saved');
-      } catch (err) {
-        console.log('[unlock] appendSessionHistoryEntry error:', err);
-      }
-
       if (clearShieldStatus.ok) {
-        setLastAction(`Emergency unlock performed. Clear shield result: ${clearShieldStatus.result}`);
+        setSession(null);
+        resetUnlockFlow('emergency_unlock_success');
+
+        try {
+          await clearActiveSession();
+          console.log('[unlock] active session cleared');
+        } catch (err) {
+          console.log('[unlock] clearActiveSession error:', err);
+        }
+
+        try {
+          await appendSessionHistoryEntry({
+            id: `${activeSession.id}-emergency-unlock`,
+            startedAt: activeSession.startedAt,
+            endedAt: Date.now(),
+            durationMinutes: activeSession.durationMinutes,
+            outcome: 'emergency_unlock',
+            unlockReason,
+            unlockAttemptCount: activeSession.unlockAttemptCount,
+          });
+          console.log('[unlock] history entry saved');
+        } catch (err) {
+          console.log('[unlock] appendSessionHistoryEntry error:', err);
+        }
+
+        router.replace('/');
       } else {
+        const sessionWithoutPendingUnlock: FocusSession = {
+          ...activeSession,
+          pendingEmergencyUnlock: undefined,
+        };
+        setSession(sessionWithoutPendingUnlock);
+        try {
+          await saveActiveSession(sessionWithoutPendingUnlock);
+        } catch (err) {
+          console.log('[unlock] saveActiveSession error after shield clear failure:', err);
+        }
         setError(
           `Shield clear did not confirm success after ${clearShieldStatus.attempts} attempts: ${clearShieldStatus.result}`,
         );
-        setLastAction('Emergency unlock ended session, but shield clear was not confirmed.');
+        setUnlockStep('reason');
       }
     } catch (err) {
       console.log('[unlock] performEmergencyUnlock error:', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
-      setLastAction('Emergency unlock failed. Try again.');
       setUnlockStep('reason');
     } finally {
       isEmergencyUnlockingRef.current = false;
@@ -415,22 +404,17 @@ export default function FocusSessionScreen() {
         setLoading(true);
         setError('');
 
-        const [storedSession, nativeSelectionSummary] = await Promise.all([
-          loadActiveSession(),
-          getSelectionSummary(),
-        ]);
-
-        setSelectionSummary(nativeSelectionSummary);
+        const storedSession = await loadActiveSession();
 
         if (!storedSession) {
-          setLastAction('No active session found.');
+          router.replace('/');
           return;
         }
 
         if (storedSession.status !== 'active') {
           setSession(null);
           await clearActiveSession();
-          setLastAction('Stored session was not active and was cleared.');
+          router.replace('/');
           return;
         }
 
@@ -439,7 +423,7 @@ export default function FocusSessionScreen() {
           await clearActiveSession();
           setSession(null);
           resetUnlockFlow('initialize_expired_session');
-          setLastAction('Stored session had already ended. Shield cleared.');
+          router.replace('/');
           return;
         }
 
@@ -452,15 +436,11 @@ export default function FocusSessionScreen() {
         };
 
         setSession(normalizedSession);
-        setSelectedDuration(normalizedSession.durationMinutes);
 
         if (normalizedSession.pendingEmergencyUnlock) {
-          setLastAction('Resuming pending emergency unlock delay.');
           void runUnlockDelayAndUnlock(normalizedSession, normalizedSession.pendingEmergencyUnlock);
           return;
         }
-
-        setLastAction('Restored active session from storage.');
       } catch (err) {
         console.log('initializeSession error', err);
         setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -470,7 +450,7 @@ export default function FocusSessionScreen() {
     };
 
     void initializeSession();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!session || session.status !== 'active') {
@@ -515,7 +495,7 @@ export default function FocusSessionScreen() {
 
         setSession(null);
         resetUnlockFlow('session_finished');
-        setLastAction('Session finished. Shield cleared.');
+        router.replace('/');
       } catch (err) {
         console.log('finishSession error', err);
         setError(err instanceof Error ? err.message : JSON.stringify(err));
@@ -525,8 +505,7 @@ export default function FocusSessionScreen() {
     };
 
     void finishSession();
-  }, [now, session]);
-
+  }, [now, router, session]);
 
   const remainingMs = useMemo(() => {
     if (!session || session.status !== 'active') {
@@ -555,163 +534,28 @@ export default function FocusSessionScreen() {
     );
   }, [selectedUnlockReason]);
 
-  async function handleStartSession() {
-    try {
-      setLoading(true);
-      setError('');
-      resetUnlockFlow('start_session');
-
-      const nativeSelectionSummary = await getSelectionSummary();
-      setSelectionSummary(nativeSelectionSummary);
-
-      if (!nativeSelectionSummary.hasSelection) {
-        setLastAction('No blocklist selected. Go to Current Selection first.');
-        return;
-      }
-
-      const shieldResult = await applyShield();
-
-      if (shieldResult !== 'applied') {
-        setLastAction(`Shield result: ${shieldResult}`);
-        return;
-      }
-
-      const startedAt = Date.now();
-      const nextSession: FocusSession = {
-        id: String(startedAt),
-        durationMinutes: selectedDuration,
-        startedAt,
-        endsAt: startedAt + selectedDuration * 60 * 1000,
-        status: 'active',
-        unlockAttemptCount: 0,
-      };
-
-      await saveActiveSession(nextSession);
-      setSession(nextSession);
-      setNow(Date.now());
-      setLastAction(`Started ${selectedDuration} minute session.`);
-    } catch (err) {
-      console.log('handleStartSession error', err);
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
-    } finally {
-      setLoading(false);
-    }
+  if (loading || !isSessionActive) {
+    return (
+      <Screen>
+        <Text style={styles.infoText}>{loading ? 'Loading...' : null}</Text>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </Screen>
+    );
   }
-
-  const selectionHasEntries = Boolean(selectionSummary?.hasSelection);
 
   return (
     <Screen scroll>
-      <PageHeader
-        eyebrow="Session"
-        title="Focus session"
-        description={
-          isSessionActive
-            ? 'You are inside the tunnel.'
-            : 'Start a focused block with your current selection.'
-        }
-        action={
-          <View
-            style={[
-              styles.statusBadge,
-              isSessionActive ? styles.statusBadgeActive : styles.statusBadgeIdle,
-            ]}
-          >
-            <Text
-              style={[
-                styles.statusBadgeText,
-                isSessionActive ? styles.statusBadgeTextActive : styles.statusBadgeTextIdle,
-              ]}
-            >
-              {isSessionActive ? 'ACTIVE' : 'IDLE'}
-            </Text>
-          </View>
-        }
-      />
+      <PageHeader title="Focus session" description="You are inside the tunnel." />
 
-      <Card>
-        <Text style={styles.cardLabel}>Remaining time</Text>
-        <Text style={styles.countdownText}>{isSessionActive ? remainingText : '-- : --'}</Text>
-        <Text style={styles.cardHint}>
-          {isSessionActive
-            ? `Running ${session?.durationMinutes} minute session`
-            : `Ready for a ${selectedDuration} minute session`}
-        </Text>
-      </Card>
+      <View style={styles.countdownSection}>
+        <Text style={styles.countdownText}>{remainingText}</Text>
+        <Text style={styles.sessionContext}>{session?.durationMinutes} minute session</Text>
+      </View>
 
-      <Card>
-        <Text style={styles.cardLabel}>Session length</Text>
-        <View style={styles.durationRow}>
-          {DURATION_OPTIONS.map((duration) => {
-            const selected = selectedDuration === duration;
-
-            return (
-              <Pressable
-                key={duration}
-                onPress={() => setSelectedDuration(duration)}
-                disabled={isSessionActive || loading}
-                style={({ pressed }) => [
-                  styles.durationChip,
-                  selected && styles.durationChipSelected,
-                  (isSessionActive || loading) && styles.durationChipDisabled,
-                  pressed && !isSessionActive && !loading && styles.durationChipPressed,
-                ]}
-              >
-                <Text
-                  style={[styles.durationChipText, selected && styles.durationChipTextSelected]}
-                >
-                  {duration} min
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </Card>
-
-      <Card>
-        <Text style={styles.cardLabel}>Current selection</Text>
-
-        <View style={styles.metricsRow}>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{selectionSummary?.applicationCount ?? 0}</Text>
-            <Text style={styles.metricLabel}>Apps</Text>
-          </View>
-
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{selectionSummary?.categoryCount ?? 0}</Text>
-            <Text style={styles.metricLabel}>Categories</Text>
-          </View>
-
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{selectionSummary?.webDomainCount ?? 0}</Text>
-            <Text style={styles.metricLabel}>Web</Text>
-          </View>
-        </View>
-
-        <Text style={styles.cardHint}>
-          {selectionHasEntries
-            ? 'Your current blocklist is ready for focus mode.'
-            : 'No selection stored yet. Go to Current Selection first.'}
-        </Text>
-      </Card>
-
-      <Card>
-        <Text style={styles.cardLabel}>Status</Text>
-        <Text style={styles.statusText}>{lastAction}</Text>
-
-        {loading ? <Text style={styles.infoText}>Working...</Text> : null}
-        {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </Card>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <View style={styles.actionsSection}>
-        <AppButton
-          label="Start Session"
-          onPress={handleStartSession}
-          disabled={isSessionActive || loading || !selectionHasEntries}
-          variant="primary"
-        />
-
-        {isSessionActive && unlockStep === 'idle' ? (
+        {unlockStep === 'idle' ? (
           <AppButton
             label="Emergency Unlock"
             onPress={handleOpenEmergencyUnlock}
@@ -720,7 +564,7 @@ export default function FocusSessionScreen() {
           />
         ) : null}
 
-        {isSessionActive && unlockStep === 'hold' ? (
+        {unlockStep === 'hold' ? (
           <Card>
             <Text style={styles.warningTitle}>Hold to unlock</Text>
             <Text style={styles.warningBody}>
@@ -752,7 +596,7 @@ export default function FocusSessionScreen() {
           </Card>
         ) : null}
 
-        {isSessionActive && unlockStep === 'reason' ? (
+        {unlockStep === 'reason' ? (
           <Card>
             <Text style={styles.warningTitle}>Why are you leaving the tunnel?</Text>
             <Text style={styles.warningBody}>Choose a reason before the unlock delay starts.</Text>
@@ -786,7 +630,7 @@ export default function FocusSessionScreen() {
           </Card>
         ) : null}
 
-        {isSessionActive && unlockStep === 'delay' ? (
+        {unlockStep === 'delay' ? (
           <Card>
             <Text style={styles.warningTitle}>Unlock delay</Text>
             <Text style={styles.warningBody}>
@@ -796,13 +640,15 @@ export default function FocusSessionScreen() {
               <Text style={styles.delayText}>Reason: {selectedUnlockReasonLabel}</Text>
             ) : null}
             <Text style={styles.delayText}>
-              Attempt {session?.unlockAttemptCount ?? 1}. The delay increases when you try again.
+              Attempt {session?.unlockAttemptCount}. The delay increases when you try again.
             </Text>
-            <Text style={styles.warningBody}>Unlock cannot be cancelled during this countdown.</Text>
+            <Text style={styles.warningBody}>
+              Unlock cannot be cancelled during this countdown.
+            </Text>
           </Card>
         ) : null}
 
-        {isSessionActive && unlockStep === 'unlocking' ? (
+        {unlockStep === 'unlocking' ? (
           <Card>
             <Text style={styles.warningTitle}>Unlocking tunnel</Text>
             <Text style={styles.warningBody}>
@@ -816,36 +662,11 @@ export default function FocusSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  statusBadge: {
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  statusBadgeActive: {
-    backgroundColor: colors.surface,
-    borderColor: colors.success,
-  },
-  statusBadgeIdle: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-  },
-  statusBadgeText: {
-    fontSize: typography.label,
-    fontWeight: '700',
-  },
-  statusBadgeTextActive: {
-    color: colors.success,
-  },
-  statusBadgeTextIdle: {
-    color: colors.muted,
-  },
-  cardLabel: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    fontFamily: fontFamilies.sans.medium,
+  countdownSection: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
   },
   countdownText: {
     color: colors.foreground,
@@ -854,69 +675,13 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
     fontFamily: fontFamilies.mono.medium,
   },
-  cardHint: {
+  sessionContext: {
     color: colors.muted,
     fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
-  durationRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  durationChip: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  durationChipSelected: {
-    borderColor: colors.foreground,
+    fontFamily: fontFamilies.sans.regular,
   },
   durationChipDisabled: {
     opacity: 0.5,
-  },
-  durationChipPressed: {
-    opacity: 0.8,
-  },
-  durationChipText: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    fontWeight: '600',
-  },
-  durationChipTextSelected: {
-    color: colors.foreground,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  metricValue: {
-    color: colors.foreground,
-    fontSize: 28,
-    fontWeight: '700',
-    fontFamily: fontFamilies.mono.medium,
-  },
-  metricLabel: {
-    color: colors.muted,
-    fontSize: typography.label,
-    fontWeight: '600',
-  },
-  statusText: {
-    color: colors.foreground,
-    fontSize: typography.body,
-    lineHeight: 24,
   },
   infoText: {
     color: colors.muted,

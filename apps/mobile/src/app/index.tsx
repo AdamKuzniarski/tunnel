@@ -1,35 +1,46 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
+import { DurationPresetPicker } from '@/components/ui/DurationPresetPicker';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
-import { StatCard } from '@/components/ui/StatCard';
-import { getSelectionSummary } from '@/services/focusControl';
+import { clearShield, getSelectionSummary } from '@/services/focusControl';
+import { startFocusSession } from '@/services/focusSessionStart';
 import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
-import { loadSessionHistory } from '@/services/sessionHistoryStorage';
-import { loadActiveSession } from '@/services/sessionStorage';
+import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
 import { colors, fontFamilies, spacing, typography } from '@/theme';
+import type { FocusSessionDurationMinutes } from '@/types/session';
 
 import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control';
-import type { FocusSession } from '@/types/session';
-import type { SessionHistoryEntry } from '@/types/sessionHistory';
+
+function isActiveSession(session: { status: string; endsAt: number } | null, now: number): boolean {
+  return session?.status === 'active' && session.endsAt > now;
+}
+
+function isExpiredActiveSession(
+  session: { status: string; endsAt: number } | null,
+  now: number,
+): boolean {
+  return session?.status === 'active' && session.endsAt <= now;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
 
-  const [activeSession, setActiveSession] = useState<FocusSession | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<FocusSessionDurationMinutes>(30);
   const [selectionSummary, setSelectionSummary] = useState<TunnelSelectionSummary | null>(null);
-  const [history, setHistory] = useState<SessionHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
-  const [now, setNow] = useState(Date.now());
+  const [startBlockedMessage, setStartBlockedMessage] = useState('');
 
-  const loadDashboard = useCallback(async () => {
+  const loadHome = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
+      setStartBlockedMessage('');
 
       const onboardingCompleted = await loadOnboardingCompleted();
 
@@ -38,17 +49,26 @@ export default function HomeScreen() {
         return;
       }
 
-      const [storedSession, nativeSelection, storedHistory] = await Promise.all([
+      const [storedSession, nativeSelection] = await Promise.all([
         loadActiveSession(),
         getSelectionSummary(),
-        loadSessionHistory(),
       ]);
 
-      setActiveSession(storedSession);
+      const now = Date.now();
+
+      if (isActiveSession(storedSession, now)) {
+        router.replace('/focus-session');
+        return;
+      }
+
+      if (isExpiredActiveSession(storedSession, now)) {
+        await clearShield();
+        await clearActiveSession();
+      }
+
       setSelectionSummary(nativeSelection);
-      setHistory(storedHistory);
     } catch (err) {
-      console.log('loadDashboard error:', err);
+      console.log('loadHome error:', err);
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     } finally {
       setLoading(false);
@@ -57,115 +77,188 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadDashboard();
-    }, [loadDashboard]),
+      void loadHome();
+    }, [loadHome]),
   );
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+  const selectionHasEntries = Boolean(selectionSummary?.hasSelection);
 
-    return () => clearInterval(interval);
-  }, []);
+  async function handleStartSession() {
+    try {
+      setStarting(true);
+      setError('');
+      setStartBlockedMessage('');
 
-  const latestEntry = history[0] ?? null;
+      const result = await startFocusSession(selectedDuration);
 
-  const emergencyUnlockCount = useMemo(() => {
-    return history.filter((entry) => entry.outcome === 'emergency_unlock').length;
-  }, [history]);
+      if (!result.ok) {
+        if (result.reason === 'no_selection') {
+          setStartBlockedMessage('Set up your blocklist before starting a session.');
+          return;
+        }
 
-  const sessionStatusValue = useMemo(() => {
-    if (!activeSession || activeSession.status !== 'active' || activeSession.endsAt <= now) {
-      return 'idle';
+        setError('Could not start focus protection. Try again.');
+        return;
+      }
+
+      router.replace('/focus-session');
+    } catch (err) {
+      console.log('handleStartSession error:', err);
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    } finally {
+      setStarting(false);
     }
+  }
 
-    const remainingMs = Math.max(activeSession.endsAt - now, 0);
-    const remainingMinutes = Math.ceil(remainingMs / 1000 / 60);
+  const isBusy = loading || starting;
 
-    return `${remainingMinutes} minutes left`;
-  }, [activeSession, now]);
-
-  const sessionStatusHint = useMemo(() => {
-    if (!activeSession || activeSession.status !== 'active' || activeSession.endsAt <= now) {
-      return 'No focus session is running right now.';
-    }
-
-    return `Current session: ${activeSession.durationMinutes} minutes`;
-  }, [activeSession, now]);
-
-  const selectionValue = selectionSummary?.hasSelection
-    ? `${selectionSummary.applicationCount} apps`
-    : 'Not ready';
-
-  const selectionHint = selectionSummary?.hasSelection
-    ? `${selectionSummary.categoryCount} categories • ${selectionSummary.webDomainCount} web domains`
-    : 'Choose what tunnel should block first.';
-
-  const latestHistoryValue = latestEntry ? latestEntry.outcome.replace('_', ' ') : 'No history';
-
-  const latestHistoryHint = latestEntry
-    ? `${latestEntry.durationMinutes} min • ${new Date(latestEntry.endedAt).toLocaleDateString()}`
-    : 'Your recent sessions will appear here.';
+  if (loading) {
+    return (
+      <Screen>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </Screen>
+    );
+  }
 
   return (
     <Screen scroll>
-      <PageHeader
-        title="tunnel"
-        description="Block the noise, then protect one clear focus block at a time."
-      />
+      <PageHeader title="tunnel" description="Block distractions. Focus on what matters." />
 
-      <View style={styles.stats}>
-        <StatCard label="Session" value={sessionStatusValue} hint={sessionStatusHint} />
-        <StatCard label="Selection" value={selectionValue} hint={selectionHint} />
-        <StatCard label="Latest" value={latestHistoryValue} hint={latestHistoryHint} />
-        <StatCard
-          label="Emergency unlocks"
-          value={String(emergencyUnlockCount)}
-          hint="Counted from recorded session history"
+      <View style={styles.durationSection}>
+        <Text style={styles.durationDisplay}>{selectedDuration} min</Text>
+        <DurationPresetPicker
+          value={selectedDuration}
+          onChange={setSelectedDuration}
+          disabled={isBusy}
         />
       </View>
 
-      <View style={styles.actions}>
-        <Text style={styles.actionsTitle}>Main actions</Text>
-        <AppButton label="Start focus session" onPress={() => router.push('/focus-session')} />
+      {selectionHasEntries ? (
+        <Text style={styles.readinessReady}>
+          {selectionSummary!.applicationCount} app
+          {selectionSummary!.applicationCount === 1 ? '' : 's'} ready to block
+        </Text>
+      ) : (
+        <Pressable
+          onPress={() => router.push('/selection?returnTo=home')}
+          disabled={isBusy}
+          style={({ pressed }) => [pressed && styles.linkPressed]}
+        >
+          <Text style={styles.readinessBlocked}>Set up your blocklist first</Text>
+        </Pressable>
+      )}
+
+      {startBlockedMessage ? (
+        <Text style={styles.blockedMessage}>{startBlockedMessage}</Text>
+      ) : null}
+
+      <View style={styles.ctaSection}>
         <AppButton
-          label="Current selection"
-          onPress={() => router.push('/selection')}
-          variant="secondary"
+          label="Start focus session"
+          onPress={handleStartSession}
+          disabled={isBusy || !selectionHasEntries}
+          variant="primary"
         />
-        <AppButton label="History" onPress={() => router.push('/history')} variant="secondary" />
-        <AppButton label="Settings" onPress={() => router.push('/settings')} variant="secondary" />
       </View>
 
-      {loading ? <Text style={styles.info}>Loading dashboard...</Text> : null}
-      {error ? <Text style={styles.error}>Error: {error}</Text> : null}
+      <View style={styles.footer}>
+        <Pressable
+          onPress={() => router.push('/selection?returnTo=home')}
+          disabled={isBusy}
+          style={({ pressed }) => [pressed && styles.linkPressed]}
+        >
+          <Text style={styles.footerLink}>Edit blocklist</Text>
+        </Pressable>
+        <Text style={styles.footerSeparator}>·</Text>
+        <Pressable
+          onPress={() => router.push('/history')}
+          disabled={isBusy}
+          style={({ pressed }) => [pressed && styles.linkPressed]}
+        >
+          <Text style={styles.footerLink}>History</Text>
+        </Pressable>
+        <Text style={styles.footerSeparator}>·</Text>
+        <Pressable
+          onPress={() => router.push('/settings')}
+          disabled={isBusy}
+          style={({ pressed }) => [pressed && styles.linkPressed]}
+        >
+          <Text style={styles.footerLink}>Settings</Text>
+        </Pressable>
+      </View>
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  stats: {
-    gap: spacing.md,
-  },
-  actions: {
-    gap: spacing.sm,
-  },
-  actionsTitle: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontFamily: fontFamilies.sans.medium,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  info: {
+  loadingText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     fontFamily: fontFamilies.sans.regular,
+  },
+  durationSection: {
+    gap: spacing.lg,
+    marginTop: spacing.xl,
+  },
+  durationDisplay: {
+    color: colors.foreground,
+    fontSize: 64,
+    fontFamily: fontFamilies.mono.medium,
+    fontWeight: '700',
+    letterSpacing: -2,
+    textAlign: 'center',
+  },
+  readinessReady: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+  },
+  readinessBlocked: {
+    color: colors.foreground,
+    fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.medium,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    textDecorationLine: 'underline',
+  },
+  blockedMessage: {
+    color: colors.mutedForeground,
+    fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+  },
+  ctaSection: {
+    marginTop: spacing.xl,
+  },
+  footer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xl,
+  },
+  footerLink: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.medium,
+  },
+  footerSeparator: {
+    color: colors.mutedForeground,
+    fontSize: typography.bodySmall,
+  },
+  linkPressed: {
+    opacity: 0.7,
   },
   error: {
     color: colors.danger,
     fontSize: typography.bodySmall,
     fontFamily: fontFamilies.sans.regular,
+    marginTop: spacing.md,
   },
 });
