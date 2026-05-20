@@ -8,9 +8,10 @@ import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control'
 import { clearSelection, getSelectionSummary } from '@/services/focusControl';
 import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
-import { Section } from '@/components/ui/Section';
 import { AppButton } from '@/components/ui/AppButton';
 import { MetricCard } from '@/components/ui/MetricCard';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 type SelectionReturnTarget = 'onboarding' | 'focus-session' | 'home';
 
@@ -91,29 +92,33 @@ export default function SelectionScreen() {
 
   return (
     <Screen scroll>
-      <Section
+      <PageHeader
         eyebrow="Selection"
         title="Current selection"
         description="Choose what tunnel should block during a focus session. The selection is saved automatically."
       />
 
-      <Section bordered eyebrow="State" title={hasSelection ? 'Ready' : 'Not ready'}>
+      <Card>
+        <Text style={styles.label}>State</Text>
+        <Text style={styles.statusTitle}>{hasSelection ? 'Ready' : 'Not ready'}</Text>
         <Text style={styles.statusText}>
           {hasSelection
             ? 'A native blocklist is available for focus mode.'
             : 'No selection yet. Pick apps, categories, or web domains below.'}
         </Text>
-      </Section>
+      </Card>
 
-      <Section bordered eyebrow="Summary" title="Selection coverage">
+      <Card>
+        <Text style={styles.label}>Selection coverage</Text>
         <View style={styles.metricsRow}>
           <MetricCard label="Apps" value={summary?.applicationCount ?? 0} />
           <MetricCard label="Categories" value={summary?.categoryCount ?? 0} />
           <MetricCard label="Web" value={summary?.webDomainCount ?? 0} />
         </View>
-      </Section>
+      </Card>
 
-      <Section bordered eyebrow="Actions" title="Selection actions">
+      <Card>
+        <Text style={styles.label}>Selection actions</Text>
         <AppButton label="Done" onPress={handleDone} disabled={loading} variant="primary" />
 
         <AppButton
@@ -122,16 +127,18 @@ export default function SelectionScreen() {
           disabled={loading || !hasSelection}
           variant="secondary"
         />
-      </Section>
+      </Card>
 
-      <Section bordered eyebrow="Status" title="Selection activity">
+      <Card>
+        <Text style={styles.label}>Selection activity</Text>
         <Text style={styles.statusText}>{lastAction}</Text>
 
         {loading ? <Text style={styles.infoText}>Working...</Text> : null}
         {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </Section>
+      </Card>
 
-      <Section bordered eyebrow="Picker" title="Native picker">
+      <Card>
+        <Text style={styles.label}>Native picker</Text>
         <View style={styles.pickerContainer}>
           <TunnelFocusControlView
             key={pickerVersion}
@@ -141,12 +148,24 @@ export default function SelectionScreen() {
             }}
           />
         </View>
-      </Section>
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  label: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontFamily: fontFamilies.sans.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statusTitle: {
+    color: colors.foreground,
+    fontSize: typography.sectionTitle,
+    fontFamily: fontFamilies.sans.semibold,
+  },
   metricsRow: {
     flexDirection: 'row',
     gap: spacing.sm,

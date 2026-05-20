@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
 import { applyShield, clearShield, getSelectionSummary } from '@/services/focusControl';
 import { appendSessionHistoryEntry, loadSessionHistory } from '@/services/sessionHistoryStorage';
@@ -601,33 +602,32 @@ export default function FocusSessionScreen() {
 
   return (
     <Screen scroll>
-      <View style={styles.hero}>
-        <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>Session</Text>
-          <Text style={styles.title}>Focus Session</Text>
-          <Text style={styles.subtitle}>
-            {isSessionActive
-              ? 'You are inside the tunnel.'
-              : 'Start a focused block with your current selection.'}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.statusBadge,
-            isSessionActive ? styles.statusBadgeActive : styles.statusBadgeIdle,
-          ]}
-        >
-          <Text
+      <PageHeader
+        eyebrow="Session"
+        title="Focus session"
+        description={
+          isSessionActive
+            ? 'You are inside the tunnel.'
+            : 'Start a focused block with your current selection.'
+        }
+        action={
+          <View
             style={[
-              styles.statusBadgeText,
-              isSessionActive ? styles.statusBadgeTextActive : styles.statusBadgeTextIdle,
+              styles.statusBadge,
+              isSessionActive ? styles.statusBadgeActive : styles.statusBadgeIdle,
             ]}
           >
-            {isSessionActive ? 'ACTIVE' : 'IDLE'}
-          </Text>
-        </View>
-      </View>
+            <Text
+              style={[
+                styles.statusBadgeText,
+                isSessionActive ? styles.statusBadgeTextActive : styles.statusBadgeTextIdle,
+              ]}
+            >
+              {isSessionActive ? 'ACTIVE' : 'IDLE'}
+            </Text>
+          </View>
+        }
+      />
 
       <Card>
         <Text style={styles.cardLabel}>Remaining time</Text>
@@ -816,35 +816,6 @@ export default function FocusSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginTop: spacing['2xl'],
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    ...(Platform.OS === 'web' ? { gap: spacing.md } : {}),
-  },
-  heroCopy: {
-    flex: 1,
-    ...(Platform.OS === 'web' ? { gap: spacing.xs } : {}),
-  },
-  eyebrow: {
-    color: colors.mutedForeground,
-    fontSize: typography.label,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  title: {
-    color: colors.foreground,
-    fontSize: typography.title,
-    fontWeight: '700',
-    fontFamily: fontFamilies.sans.semibold,
-  },
-  subtitle: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-    fontFamily: fontFamilies.sans.regular,
-  },
   statusBadge: {
     borderWidth: 1,
     borderRadius: radius.lg,
@@ -891,7 +862,7 @@ const styles = StyleSheet.create({
   durationRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    ...(Platform.OS === 'web' ? { gap: spacing.sm } : {}),
+    gap: spacing.sm,
   },
   durationChip: {
     backgroundColor: colors.surfaceElevated,
@@ -929,7 +900,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSubtle,
     borderRadius: radius.md,
     padding: spacing.md,
-    ...(Platform.OS === 'web' ? { gap: spacing.xs } : {}),
+    gap: spacing.xs,
   },
   metricValue: {
     color: colors.foreground,
@@ -957,7 +928,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   actionsSection: {
-    ...(Platform.OS === 'web' ? { gap: spacing.md } : {}),
+    gap: spacing.md,
   },
   warningTitle: {
     color: colors.foreground,
@@ -977,7 +948,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
-    ...(Platform.OS === 'web' ? { gap: spacing.xs } : {}),
+    gap: spacing.xs,
   },
   holdButtonPressed: {
     opacity: 0.85,
@@ -993,7 +964,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.mono.medium,
   },
   reasonGrid: {
-    ...(Platform.OS === 'web' ? { gap: spacing.sm } : {}),
+    gap: spacing.sm,
   },
   reasonOption: {
     backgroundColor: colors.surfaceElevated,

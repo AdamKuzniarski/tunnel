@@ -3,8 +3,9 @@ import { StyleSheet, Text } from 'react-native';
 import { getAuthorizationStatus, requestAuthorization } from '../services/focusControl';
 import type { TunnelAuthorizationStatus } from '../../modules/tunnel-focus-control';
 import { Screen } from '@/components/ui/Screen';
-import { Section } from '@/components/ui/Section';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { AppButton } from '@/components/ui/AppButton';
+import { Card } from '@/components/ui/Card';
 import { colors, fontFamilies, typography } from '@/theme';
 
 export default function NativeTestScreen() {
@@ -49,35 +50,41 @@ export default function NativeTestScreen() {
 
   return (
     <Screen scroll>
-      <Section
+      <PageHeader
         eyebrow="Debug"
         title="Permission debug"
         description="Use this screen to inspect native authorization state while developing."
       />
 
-      <Section
-        bordered
-        eyebrow="Current status"
-        title={authorizationStatus ?? 'No status loaded yet.'}
-      >
-        <Text style={styles.valueText}>{lastAction}</Text>
+      <Card>
+        <Text style={styles.label}>Current status</Text>
+        <Text style={styles.valueText}>{authorizationStatus ?? 'No status loaded yet.'}</Text>
+        <Text style={styles.infoText}>{lastAction}</Text>
         {loading ? <Text style={styles.infoText}>Loading...</Text> : null}
         {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </Section>
+      </Card>
 
-      <Section bordered eyebrow="Actions" title="Native checks">
+      <Card>
+        <Text style={styles.label}>Native checks</Text>
         <AppButton label="Get authorization status" onPress={handleGetAuthorizationStatus} />
         <AppButton
           label="Request authorization"
           onPress={handleRequestAuthorization}
           variant="secondary"
         />
-      </Section>
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  label: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontFamily: fontFamilies.sans.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   valueText: {
     color: colors.foreground,
     fontSize: typography.body,

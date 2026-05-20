@@ -1,29 +1,31 @@
 import { StyleSheet, Text } from 'react-native';
 import { colors, fontFamilies, typography } from '@/theme';
 import { Screen } from '@/components/ui/Screen';
-import { Section } from '@/components/ui/Section';
+import { Card } from '@/components/ui/Card';
 import { AppButton } from '@/components/ui/AppButton';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { resetOnboardingCompleted } from '@/services/onBoardingStorage';
 import { router } from 'expo-router';
 
 export default function SettingsScreen() {
   return (
     <Screen>
-      <Section
+      <PageHeader
         eyebrow="Settings"
         title="App settings"
         description="This area will hold app preferences and product options later."
       />
 
-      <Section bordered eyebrow="Current state" title="Placeholder">
+      <Card>
         <Text style={styles.bodyText}>
           tunnel settings are not implemented yet. This screen exists so the app shell already feels
           complete.
         </Text>
-      </Section>
+      </Card>
 
       {__DEV__ ? (
-        <Section bordered eyebrow="Developer" title="Debug tools">
+        <Card>
+          <Text style={styles.devTitle}>Developer</Text>
           <AppButton
             label="Reset onboarding"
             onPress={async () => {
@@ -32,7 +34,7 @@ export default function SettingsScreen() {
             }}
             variant="quiet"
           />
-        </Section>
+        </Card>
       ) : null}
     </Screen>
   );
@@ -44,5 +46,12 @@ const styles = StyleSheet.create({
     fontSize: typography.bodySmall,
     lineHeight: 22,
     fontFamily: fontFamilies.sans.regular,
+  },
+  devTitle: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontFamily: fontFamilies.sans.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
