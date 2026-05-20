@@ -6,10 +6,10 @@ import { AppButton } from '@/components/ui/AppButton';
 import { DurationPresetPicker } from '@/components/ui/DurationPresetPicker';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
-import { getSelectionSummary } from '@/services/focusControl';
+import { clearShield, getSelectionSummary } from '@/services/focusControl';
 import { startFocusSession } from '@/services/focusSessionStart';
 import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
-import { loadActiveSession } from '@/services/sessionStorage';
+import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
 import { colors, fontFamilies, spacing, typography } from '@/theme';
 import type { FocusSessionDurationMinutes } from '@/types/session';
 
@@ -17,6 +17,13 @@ import type { TunnelSelectionSummary } from '../../modules/tunnel-focus-control'
 
 function isActiveSession(session: { status: string; endsAt: number } | null, now: number): boolean {
   return session?.status === 'active' && session.endsAt > now;
+}
+
+function isExpiredActiveSession(
+  session: { status: string; endsAt: number } | null,
+  now: number,
+): boolean {
+  return session?.status === 'active' && session.endsAt <= now;
 }
 
 export default function HomeScreen() {
@@ -47,9 +54,16 @@ export default function HomeScreen() {
         getSelectionSummary(),
       ]);
 
-      if (isActiveSession(storedSession, Date.now())) {
+      const now = Date.now();
+
+      if (isActiveSession(storedSession, now)) {
         router.replace('/focus-session');
         return;
+      }
+
+      if (isExpiredActiveSession(storedSession, now)) {
+        await clearShield();
+        await clearActiveSession();
       }
 
       setSelectionSummary(nativeSelection);
