@@ -6,7 +6,6 @@ import { colors } from '@/theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
-  // Prevent the splash screen from auto-hiding while we load fonts.
   useEffect(() => {
     void SplashScreen.preventAutoHideAsync().catch(() => {});
   }, []);
