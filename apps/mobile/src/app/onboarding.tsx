@@ -4,7 +4,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
-import { Section } from '@/components/ui/Section';
+import { Card } from '@/components/ui/Card';
+import { PageHeader } from '@/components/ui/PageHeader';
 import {
   applyShield,
   clearShield,
@@ -155,18 +156,16 @@ export default function OnboardingScreen() {
 
   return (
     <Screen scroll>
-      <Section
+      <PageHeader
         eyebrow="Setup"
         title="Prepare your first tunnel"
         description="Set up Screen Time permission, choose your blocklist, test the shield, then start your first focused session."
       />
 
-      <Section
-        bordered
-        eyebrow="Step 1"
-        title="Screen Time permission"
-        description={permissionText}
-      >
+      <Card>
+        <Text style={styles.label}>Step 1</Text>
+        <Text style={styles.stepTitle}>Screen Time permission</Text>
+        <Text style={styles.infoText}>{permissionText}</Text>
         <Text style={styles.statusText}>Current status: {authorizationStatus}</Text>
 
         <AppButton
@@ -175,14 +174,14 @@ export default function OnboardingScreen() {
           disabled={loading || authorizationReady || authorizationStatus === 'unsupported'}
           variant={authorizationReady ? 'secondary' : 'primary'}
         />
-      </Section>
+      </Card>
 
-      <Section
-        bordered
-        eyebrow="Step 2"
-        title="Choose blocklist"
-        description="Pick the apps, categories, or web domains tunnel should block during focus sessions."
-      >
+      <Card>
+        <Text style={styles.label}>Step 2</Text>
+        <Text style={styles.stepTitle}>Choose blocklist</Text>
+        <Text style={styles.infoText}>
+          Pick the apps, categories, or web domains tunnel should block during focus sessions.
+        </Text>
         <Text style={styles.statusText}>
           {selectionReady
             ? `${selectionSummary?.applicationCount ?? 0} apps • ${
@@ -199,14 +198,15 @@ export default function OnboardingScreen() {
           disabled={loading || !authorizationReady}
           variant={selectionReady ? 'secondary' : 'primary'}
         />
-      </Section>
+      </Card>
 
-      <Section
-        bordered
-        eyebrow="Step 3"
-        title="Test shield"
-        description="tunnel applies the shield once and clears it immediately. This verifies the native bridge works."
-      >
+      <Card>
+        <Text style={styles.label}>Step 3</Text>
+        <Text style={styles.stepTitle}>Test shield</Text>
+        <Text style={styles.infoText}>
+          tunnel applies the shield once and clears it immediately. This verifies the native bridge
+          works.
+        </Text>
         <Text style={styles.statusText}>
           Test status:{' '}
           {testShieldState === 'passed'
@@ -222,32 +222,45 @@ export default function OnboardingScreen() {
           disabled={loading || !authorizationReady || !selectionReady || testShieldPassed}
           variant={testShieldPassed ? 'secondary' : 'primary'}
         />
-      </Section>
+      </Card>
 
-      <Section
-        bordered
-        eyebrow="Step 4"
-        title="Start first session"
-        description="When setup is complete, start your first 30-minute tunnel session."
-      >
+      <Card>
+        <Text style={styles.label}>Step 4</Text>
+        <Text style={styles.stepTitle}>Start first session</Text>
+        <Text style={styles.infoText}>
+          When setup is complete, start your first 30-minute tunnel session.
+        </Text>
         <AppButton
           label="Start first 30-minute session"
           onPress={handleFinishSetup}
           disabled={loading || !setupComplete}
           variant="primary"
         />
-      </Section>
+      </Card>
 
-      <Section bordered eyebrow="Status" title="Setup activity">
+      <Card>
+        <Text style={styles.label}>Setup activity</Text>
         <Text style={styles.statusText}>{lastAction}</Text>
         {loading ? <Text style={styles.infoText}>Working...</Text> : null}
         {error ? <Text style={styles.errorText}>Error: {error}</Text> : null}
-      </Section>
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  label: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontFamily: fontFamilies.sans.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  stepTitle: {
+    color: colors.foreground,
+    fontSize: typography.sectionTitle,
+    fontFamily: fontFamilies.sans.semibold,
+  },
   statusText: {
     color: colors.foreground,
     fontSize: typography.bodySmall,
@@ -258,6 +271,7 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     fontSize: typography.bodySmall,
     fontFamily: fontFamilies.sans.regular,
+    lineHeight: 22,
   },
   errorText: {
     color: colors.danger,
