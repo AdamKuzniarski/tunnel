@@ -1,9 +1,10 @@
-import { Link, useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { AppButton } from '@/components/ui/AppButton';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
-import { Section } from '@/components/ui/Section';
 import { StatCard } from '@/components/ui/StatCard';
 import { getSelectionSummary } from '@/services/focusControl';
 import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
@@ -109,9 +110,10 @@ export default function HomeScreen() {
 
   return (
     <Screen scroll>
-      <Section title="tunnel" description="Stay in flow">
-        <Text style={styles.supportText}>Block the noise and protect focused work.</Text>
-      </Section>
+      <PageHeader
+        title="tunnel"
+        description="Block the noise, then protect one clear focus block at a time."
+      />
 
       <View style={styles.stats}>
         <StatCard label="Session" value={sessionStatusValue} hint={sessionStatusHint} />
@@ -124,23 +126,17 @@ export default function HomeScreen() {
         />
       </View>
 
-      <Section title="Main actions" bordered>
-        <Link href="/focus-session" style={styles.linkItem}>
-          Start focus session
-        </Link>
-
-        <Link href="/selection" style={styles.linkItem}>
-          Current selection
-        </Link>
-
-        <Link href="/history" style={styles.linkItem}>
-          History
-        </Link>
-
-        <Link href="/settings" style={styles.linkItem}>
-          Settings
-        </Link>
-      </Section>
+      <View style={styles.actions}>
+        <Text style={styles.actionsTitle}>Main actions</Text>
+        <AppButton label="Start focus session" onPress={() => router.push('/focus-session')} />
+        <AppButton
+          label="Current selection"
+          onPress={() => router.push('/selection')}
+          variant="secondary"
+        />
+        <AppButton label="History" onPress={() => router.push('/history')} variant="secondary" />
+        <AppButton label="Settings" onPress={() => router.push('/settings')} variant="secondary" />
+      </View>
 
       {loading ? <Text style={styles.info}>Loading dashboard...</Text> : null}
       {error ? <Text style={styles.error}>Error: {error}</Text> : null}
@@ -149,26 +145,18 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  supportText: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-    fontFamily: fontFamilies.sans.regular,
-  },
   stats: {
     gap: spacing.md,
   },
-  linkItem: {
-    backgroundColor: colors.surface,
-    color: colors.foreground,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    fontSize: typography.body,
+  actions: {
+    gap: spacing.sm,
+  },
+  actionsTitle: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
     fontFamily: fontFamilies.sans.medium,
-    overflow: 'hidden',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   info: {
     color: colors.muted,
