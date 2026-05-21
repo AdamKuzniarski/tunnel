@@ -3,8 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
-import { Card } from '@/components/ui/Card';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
 import { clearShield } from '@/services/focusControl';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
@@ -534,228 +532,316 @@ export default function FocusSessionScreen() {
     );
   }, [selectedUnlockReason]);
 
+  const holdProgressFraction = Math.min(holdProgressMs / HOLD_TO_UNLOCK_DURATION_MS, 1);
+  const needsScroll = unlockStep === 'reason';
+
+  function renderSessionHero() {
+    return (
+      <View style={styles.centerRegion}>
+        <Text style={styles.heroTimer}>{remainingText}</Text>
+        <Text style={styles.sessionContext}>{session?.durationMinutes} min</Text>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
+    );
+  }
+
+  function renderQuietCancel() {
+    return (
+      <Pressable
+        onPress={handleCancelEmergencyUnlock}
+        disabled={loading}
+        style={({ pressed }) => [styles.quietCancel, pressed && styles.quietCancelPressed]}
+      >
+        <Text style={styles.quietCancelText}>Cancel</Text>
+      </Pressable>
+    );
+  }
+
+  function renderEmergencyUnlockEntry() {
+    if (unlockStep !== 'idle') {
+      return null;
+    }
+
+    return (
+      <AppButton
+        label="Emergency unlock"
+        onPress={handleOpenEmergencyUnlock}
+        disabled={loading}
+        variant="quiet"
+      />
+    );
+  }
+
+  function renderUnlockFlow() {
+    if (unlockStep === 'hold') {
+      return (
+        <View style={styles.flowSection}>
+          <Text style={styles.flowTitle}>Hold to unlock</Text>
+          <Text style={styles.flowBody}>Keep holding for 5 seconds. Release early to cancel.</Text>
+
+          <View style={styles.holdProgressTrack}>
+            <View style={[styles.holdProgressFill, { flex: holdProgressFraction }]} />
+            <View style={{ flex: 1 - holdProgressFraction }} />
+          </View>
+
+          <Pressable
+            onPressIn={handleHoldStart}
+            onPressOut={handleHoldEnd}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.holdTarget,
+              pressed && styles.holdTargetPressed,
+              loading && styles.disabledControl,
+            ]}
+          >
+            <Text style={styles.holdTargetLabel}>Hold to unlock</Text>
+            <Text style={styles.holdProgressText}>{formatHoldProgress(holdProgressMs)} / 5.0s</Text>
+          </Pressable>
+
+          {renderQuietCancel()}
+        </View>
+      );
+    }
+
+    if (unlockStep === 'reason') {
+      return (
+        <View style={styles.flowSection}>
+          <Text style={styles.flowTitle}>Why are you leaving?</Text>
+          <Text style={styles.flowBody}>Choose a reason before the unlock delay starts.</Text>
+
+          <View style={styles.reasonList}>
+            {UNLOCK_REASON_OPTIONS.map((option, index) => (
+              <Pressable
+                key={option.value}
+                onPress={() => {
+                  void handleSelectUnlockReason(option.value);
+                }}
+                disabled={loading}
+                style={({ pressed }) => [
+                  styles.reasonRow,
+                  index < UNLOCK_REASON_OPTIONS.length - 1 && styles.reasonRowBorder,
+                  pressed && styles.reasonRowPressed,
+                  loading && styles.disabledControl,
+                ]}
+              >
+                <Text style={styles.reasonLabel}>{option.label}</Text>
+                <Text style={styles.reasonHint}>{option.hint}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {renderQuietCancel()}
+        </View>
+      );
+    }
+
+    if (unlockStep === 'delay') {
+      return (
+        <View style={styles.flowSection}>
+          <Text style={styles.flowTitle}>
+            Unlocking in {unlockCountdown} second{unlockCountdown === 1 ? '' : 's'}
+          </Text>
+          {selectedUnlockReasonLabel ? (
+            <Text style={styles.flowMeta}>Reason: {selectedUnlockReasonLabel}</Text>
+          ) : null}
+          <Text style={styles.flowMeta}>
+            Attempt {session?.unlockAttemptCount}. Delay increases on repeat tries.
+          </Text>
+          <Text style={styles.flowBody}>Unlock cannot be cancelled during this countdown.</Text>
+        </View>
+      );
+    }
+
+    if (unlockStep === 'unlocking') {
+      return (
+        <View style={styles.flowSection}>
+          <Text style={styles.flowBody}>Clearing the shield and ending this session...</Text>
+        </View>
+      );
+    }
+
+    return null;
+  }
+
   if (loading || !isSessionActive) {
     return (
       <Screen>
-        <Text style={styles.infoText}>{loading ? 'Loading...' : null}</Text>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        <View style={styles.loadingRoot}>
+          <Text style={styles.statusLabel}>Inside the tunnel</Text>
+          {loading ? <Text style={styles.infoText}>Loading...</Text> : null}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        </View>
       </Screen>
     );
   }
 
   return (
-    <Screen scroll>
-      <PageHeader title="Focus session" description="You are inside the tunnel." />
+    <Screen scroll={needsScroll}>
+      <View style={styles.root}>
+        <View style={styles.topRegion}>
+          <Text style={styles.statusLabel}>Inside the tunnel</Text>
+        </View>
 
-      <View style={styles.countdownSection}>
-        <Text style={styles.countdownText}>{remainingText}</Text>
-        <Text style={styles.sessionContext}>{session?.durationMinutes} minute session</Text>
-      </View>
+        {renderSessionHero()}
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      <View style={styles.actionsSection}>
-        {unlockStep === 'idle' ? (
-          <AppButton
-            label="Emergency Unlock"
-            onPress={handleOpenEmergencyUnlock}
-            disabled={loading}
-            variant="secondary"
-          />
-        ) : null}
-
-        {unlockStep === 'hold' ? (
-          <Card>
-            <Text style={styles.warningTitle}>Hold to unlock</Text>
-            <Text style={styles.warningBody}>
-              Keep holding for 5 seconds. Releasing early cancels the unlock.
-            </Text>
-
-            <Pressable
-              onPressIn={handleHoldStart}
-              onPressOut={handleHoldEnd}
-              disabled={loading}
-              style={({ pressed }) => [
-                styles.holdButton,
-                pressed && styles.holdButtonPressed,
-                loading && styles.durationChipDisabled,
-              ]}
-            >
-              <Text style={styles.holdButtonText}>Hold to unlock</Text>
-              <Text style={styles.holdProgressText}>
-                {formatHoldProgress(holdProgressMs)} / 5.0s
-              </Text>
-            </Pressable>
-
-            <AppButton
-              label="Cancel"
-              onPress={handleCancelEmergencyUnlock}
-              disabled={loading}
-              variant="secondary"
-            />
-          </Card>
-        ) : null}
-
-        {unlockStep === 'reason' ? (
-          <Card>
-            <Text style={styles.warningTitle}>Why are you leaving the tunnel?</Text>
-            <Text style={styles.warningBody}>Choose a reason before the unlock delay starts.</Text>
-
-            <View style={styles.reasonGrid}>
-              {UNLOCK_REASON_OPTIONS.map((option) => (
-                <Pressable
-                  key={option.value}
-                  onPress={() => {
-                    void handleSelectUnlockReason(option.value);
-                  }}
-                  disabled={loading}
-                  style={({ pressed }) => [
-                    styles.reasonOption,
-                    pressed && styles.reasonOptionPressed,
-                    loading && styles.durationChipDisabled,
-                  ]}
-                >
-                  <Text style={styles.reasonLabel}>{option.label}</Text>
-                  <Text style={styles.reasonHint}>{option.hint}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            <AppButton
-              label="Cancel"
-              onPress={handleCancelEmergencyUnlock}
-              disabled={loading}
-              variant="secondary"
-            />
-          </Card>
-        ) : null}
-
-        {unlockStep === 'delay' ? (
-          <Card>
-            <Text style={styles.warningTitle}>Unlock delay</Text>
-            <Text style={styles.warningBody}>
-              Unlocking in {unlockCountdown} second{unlockCountdown === 1 ? '' : 's'}...
-            </Text>
-            {selectedUnlockReasonLabel ? (
-              <Text style={styles.delayText}>Reason: {selectedUnlockReasonLabel}</Text>
-            ) : null}
-            <Text style={styles.delayText}>
-              Attempt {session?.unlockAttemptCount}. The delay increases when you try again.
-            </Text>
-            <Text style={styles.warningBody}>
-              Unlock cannot be cancelled during this countdown.
-            </Text>
-          </Card>
-        ) : null}
-
-        {unlockStep === 'unlocking' ? (
-          <Card>
-            <Text style={styles.warningTitle}>Unlocking tunnel</Text>
-            <Text style={styles.warningBody}>
-              Clearing the shield and ending the current session...
-            </Text>
-          </Card>
-        ) : null}
+        <View style={styles.bottomRegion}>
+          {renderUnlockFlow()}
+          {renderEmergencyUnlockEntry()}
+        </View>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  countdownSection: {
+  root: {
+    flex: 1,
+    gap: spacing.lg,
+  },
+  loadingRoot: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  topRegion: {
+    paddingTop: spacing.sm,
+  },
+  statusLabel: {
+    color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontFamily: fontFamilies.sans.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  centerRegion: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     gap: spacing.sm,
-    marginTop: spacing.xl,
-    marginBottom: spacing.xl,
   },
-  countdownText: {
+  heroTimer: {
     color: colors.foreground,
-    fontSize: 56,
+    fontSize: 72,
     fontWeight: '700',
-    letterSpacing: -2,
+    letterSpacing: -3,
     fontFamily: fontFamilies.mono.medium,
   },
   sessionContext: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
+    color: colors.mutedForeground,
+    fontSize: typography.label,
     fontFamily: fontFamilies.sans.regular,
   },
-  durationChipDisabled: {
-    opacity: 0.5,
+  bottomRegion: {
+    gap: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  infoText: {
-    color: colors.muted,
-    fontSize: typography.bodySmall,
-  },
-  errorText: {
-    color: colors.danger,
-    fontSize: typography.bodySmall,
-    lineHeight: 22,
-  },
-  actionsSection: {
+  flowSection: {
     gap: spacing.md,
   },
-  warningTitle: {
+  flowTitle: {
     color: colors.foreground,
-    fontSize: typography.sectionTitle,
-    fontWeight: '600',
+    fontSize: typography.body,
+    fontFamily: fontFamilies.sans.medium,
   },
-  warningBody: {
+  flowBody: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
   },
-  holdButton: {
+  flowMeta: {
+    color: colors.mutedForeground,
+    fontSize: typography.bodySmall,
+    lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
+  },
+  holdProgressTrack: {
+    flexDirection: 'row',
+    height: 3,
+    borderRadius: radius.sm,
+    backgroundColor: colors.borderSubtle,
+    overflow: 'hidden',
+  },
+  holdProgressFill: {
+    backgroundColor: colors.muted,
+    borderRadius: radius.sm,
+  },
+  holdTarget: {
     backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.danger,
     borderRadius: radius.lg,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
     alignItems: 'center',
     gap: spacing.xs,
+    minHeight: 44,
   },
-  holdButtonPressed: {
+  holdTargetPressed: {
     opacity: 0.85,
   },
-  holdButtonText: {
+  holdTargetLabel: {
     color: colors.foreground,
     fontSize: typography.body,
-    fontWeight: '700',
+    fontFamily: fontFamilies.sans.semibold,
   },
   holdProgressText: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     fontFamily: fontFamilies.mono.medium,
   },
-  reasonGrid: {
-    gap: spacing.sm,
+  reasonList: {
+    gap: 0,
   },
-  reasonOption: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+  reasonRow: {
+    paddingVertical: spacing.md,
+    gap: spacing.xs,
   },
-  reasonOptionPressed: {
+  reasonRowBorder: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.borderSubtle,
+  },
+  reasonRowPressed: {
     opacity: 0.85,
-    borderColor: colors.foreground,
   },
   reasonLabel: {
     color: colors.foreground,
     fontSize: typography.body,
-    fontWeight: '700',
+    fontFamily: fontFamilies.sans.medium,
   },
   reasonHint: {
     color: colors.muted,
     fontSize: typography.bodySmall,
     lineHeight: 20,
+    fontFamily: fontFamilies.sans.regular,
   },
-  delayText: {
+  quietCancel: {
+    alignSelf: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  quietCancelPressed: {
+    opacity: 0.7,
+  },
+  quietCancelText: {
     color: colors.mutedForeground,
+    fontSize: typography.label,
+    fontFamily: fontFamilies.sans.medium,
+  },
+  disabledControl: {
+    opacity: 0.5,
+  },
+  infoText: {
+    color: colors.muted,
+    fontSize: typography.bodySmall,
+    fontFamily: fontFamilies.sans.regular,
+  },
+  errorText: {
+    color: colors.danger,
     fontSize: typography.bodySmall,
     lineHeight: 22,
+    fontFamily: fontFamilies.sans.regular,
+    textAlign: 'center',
   },
 });
