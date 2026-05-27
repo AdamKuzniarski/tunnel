@@ -32,6 +32,26 @@ You can start developing by editing the files inside the **app** directory. This
 - If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
 - Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
 
+## Testing
+
+Run tests (headless, no iOS Simulator required):
+
+```bash
+npm run test
+```
+
+Watch mode:
+
+```bash
+npm run test:watch
+```
+
+Coverage:
+
+```bash
+npm run test:coverage
+```
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:
