@@ -59,7 +59,8 @@
             "./src/assets/fonts/GeistMono-Medium.ttf"
           ]
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,
