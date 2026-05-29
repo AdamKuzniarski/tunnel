@@ -1,15 +1,19 @@
 {
   "expo": {
-    "name": "tunnel",
-    "slug": "tunnel",
+    "name": "tunnel focus",
+    "slug": "tunnel-focus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "tunnel",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.adamkuzniarski.tunnel"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.adamkuzniarski.tunnel",
+      "buildNumber": "1",
+      "entitlements": {
+        "com.apple.developer.family-controls": true
+      }
     },
     "android": {
       "adaptiveIcon": {
