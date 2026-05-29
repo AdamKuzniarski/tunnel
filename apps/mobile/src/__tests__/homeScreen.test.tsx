@@ -7,7 +7,7 @@ import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
 import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
 import type { FocusSession } from '@/types/session';
 
-import HomeScreen from '../index';
+import HomeScreen from '../app';
 
 const mockReplace = jest.fn();
 const mockPush = jest.fn();
