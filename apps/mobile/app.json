@@ -1,15 +1,19 @@
 {
   "expo": {
-    "name": "tunnel",
-    "slug": "mobile",
+    "name": "tunnel focus",
+    "slug": "tunnel-focus",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "tunnel",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.adamkuzniarski.mobile"
+      "icon": "./assets/images/icon.png",
+      "bundleIdentifier": "com.adamkuzniarski.tunnel",
+      "buildNumber": "1",
+      "entitlements": {
+        "com.apple.developer.family-controls": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -44,18 +48,18 @@
           }
         }
       ],
-        [
-          "expo-font",
-          {
-            "fonts": [
-              "./src/assets/fonts/Geist-Regular.ttf",
-              "./src/assets/fonts/Geist-Medium.ttf",
-              "./src/assets/fonts/Geist-SemiBold.ttf",
-              "./src/assets/fonts/GeistMono-Regular.ttf",
-              "./src/assets/fonts/GeistMono-Medium.ttf"
-            ]
-          }
-        ]
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./src/assets/fonts/Geist-Regular.ttf",
+            "./src/assets/fonts/Geist-Medium.ttf",
+            "./src/assets/fonts/Geist-SemiBold.ttf",
+            "./src/assets/fonts/GeistMono-Regular.ttf",
+            "./src/assets/fonts/GeistMono-Medium.ttf"
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
