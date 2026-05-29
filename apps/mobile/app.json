@@ -13,6 +13,9 @@
       "buildNumber": "1",
       "entitlements": {
         "com.apple.developer.family-controls": true
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -65,6 +68,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5e90ff6b-6ee2-48fc-a771-5715800cba47"
+      }
     }
   }
 }
