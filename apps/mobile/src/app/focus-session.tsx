@@ -401,7 +401,21 @@ export default function FocusSessionScreen() {
         }
 
         if (Date.now() >= storedSession.endsAt) {
-          await clearShield();
+          const clearShieldStatus = await clearShieldWithRetry();
+
+          console.log('[session] expired session clearShield result:', clearShieldStatus.result);
+          console.log(
+            '[session] expired session clearShield attempts:',
+            clearShieldStatus.attempts,
+          );
+
+          if (!clearShieldStatus.ok) {
+            setError(
+              `Shield clear did not confirm success after ${clearShieldStatus.attempts} attempts: ${clearShieldStatus.result}`,
+            );
+            return;
+          }
+
           await clearActiveSession();
           setSession(null);
           resetUnlockFlow('initialize_expired_session');
