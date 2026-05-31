@@ -82,6 +82,14 @@ function normalizePendingEmergencyUnlock(
   return pending;
 }
 
+function normalizeLoadedSession(session: FocusSession): FocusSession {
+  return {
+    ...session,
+    unlockAttemptCount: session.unlockAttemptCount ?? 0,
+    pendingEmergencyUnlock: normalizePendingEmergencyUnlock(session.pendingEmergencyUnlock),
+  };
+}
+
 async function clearShieldWithRetry(): Promise<{ ok: boolean; result: string; attempts: number }> {
   let lastResult = 'unknown';
   const maxAttempts = 3;
@@ -401,6 +409,7 @@ export default function FocusSessionScreen() {
         }
 
         if (Date.now() >= storedSession.endsAt) {
+          const normalizedSession = normalizeLoadedSession(storedSession);
           const clearShieldStatus = await clearShieldWithRetry();
 
           console.log('[session] expired session clearShield result:', clearShieldStatus.result);
@@ -410,6 +419,7 @@ export default function FocusSessionScreen() {
           );
 
           if (!clearShieldStatus.ok) {
+            setSession(normalizedSession);
             setError(
               `Shield clear did not confirm success after ${clearShieldStatus.attempts} attempts: ${clearShieldStatus.result}`,
             );
@@ -423,13 +433,7 @@ export default function FocusSessionScreen() {
           return;
         }
 
-        const normalizedSession: FocusSession = {
-          ...storedSession,
-          unlockAttemptCount: storedSession.unlockAttemptCount ?? 0,
-          pendingEmergencyUnlock: normalizePendingEmergencyUnlock(
-            storedSession.pendingEmergencyUnlock,
-          ),
-        };
+        const normalizedSession = normalizeLoadedSession(storedSession);
 
         setSession(normalizedSession);
 
