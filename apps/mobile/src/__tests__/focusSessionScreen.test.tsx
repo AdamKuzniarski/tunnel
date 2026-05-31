@@ -132,6 +132,31 @@ describe('FocusSessionScreen', () => {
     expect(mockReplace).toHaveBeenCalledWith('/');
   });
 
+  it('keeps a directly opened expired session recoverable when initial shield clearing fails', async () => {
+    mockClearShield
+      .mockResolvedValueOnce('unsupported')
+      .mockResolvedValueOnce('unsupported')
+      .mockResolvedValueOnce('unsupported')
+      .mockResolvedValueOnce('cleared');
+
+    const screen = await renderLoadedSession(activeSession({ endsAt: now }));
+
+    await advanceTimersByTime(300);
+    await advanceTimersByTime(300);
+
+    expect(
+      await screen.findByText('Shield clear did not confirm success after 3 attempts: unsupported'),
+    ).toBeTruthy();
+
+    await waitFor(() => {
+      expect(mockClearShield).toHaveBeenCalledTimes(4);
+    });
+    await waitFor(() => {
+      expect(mockClearActiveSession).toHaveBeenCalledTimes(1);
+    });
+    expect(mockReplace).toHaveBeenCalledWith('/');
+  });
+
   it('renders countdown UI for an active session', async () => {
     const { findByText } = await renderLoadedSession();
 
