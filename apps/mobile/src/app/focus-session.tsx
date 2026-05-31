@@ -478,7 +478,21 @@ export default function FocusSessionScreen() {
 
     const finishSession = async () => {
       try {
-        await clearShield();
+        const clearShieldStatus = await clearShieldWithRetry();
+
+        console.log('[session] completed session clearShield result:', clearShieldStatus.result);
+        console.log(
+          '[session] completed session clearShield attempts:',
+          clearShieldStatus.attempts,
+        );
+
+        if (!clearShieldStatus.ok) {
+          setError(
+            `Shield clear did not confirm success after ${clearShieldStatus.attempts} attempts: ${clearShieldStatus.result}`,
+          );
+          return;
+        }
+
         await clearActiveSession();
 
         await appendSessionHistoryEntry({
