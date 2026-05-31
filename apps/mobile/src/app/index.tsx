@@ -6,10 +6,11 @@ import { AppButton } from '@/components/ui/AppButton';
 import { DurationPresetPicker } from '@/components/ui/DurationPresetPicker';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Screen } from '@/components/ui/Screen';
-import { clearShield, getSelectionSummary } from '@/services/focusControl';
+import { getSelectionSummary } from '@/services/focusControl';
 import { startFocusSession } from '@/services/focusSessionStart';
 import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
-import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
+import { reconcileExpiredActiveSession } from '@/services/sessionExpiry';
+import { loadActiveSession } from '@/services/sessionStorage';
 import { colors, fontFamilies, spacing, typography } from '@/theme';
 import type { FocusSessionDurationMinutes } from '@/types/session';
 
@@ -62,8 +63,13 @@ export default function HomeScreen() {
       }
 
       if (isExpiredActiveSession(storedSession, now)) {
-        await clearShield();
-        await clearActiveSession();
+        const result = await reconcileExpiredActiveSession(now);
+
+        if (result.expired && !result.clearShieldStatus.ok) {
+          setError(
+            `Shield clear did not confirm success after ${result.clearShieldStatus.attempts} attempts: ${result.clearShieldStatus.result}`,
+          );
+        }
       }
 
       setSelectionSummary(nativeSelection);
