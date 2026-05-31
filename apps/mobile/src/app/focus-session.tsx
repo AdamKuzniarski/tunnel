@@ -5,13 +5,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
-import { clearShield } from '@/services/focusControl';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 import {
   clearActiveSession,
   loadActiveSession,
   saveActiveSession,
 } from '@/services/sessionStorage';
+import { clearShieldWithRetry } from '@/services/shieldClear';
 import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
 import type { FocusSession, PendingEmergencyUnlock } from '@/types/session';
 import type { EmergencyUnlockReason } from '@/types/sessionHistory';
@@ -54,7 +54,7 @@ function formatHoldProgress(progressMs: number): string {
   const seconds = Math.min(progressMs / 1000, HOLD_TO_UNLOCK_DURATION_MS / 1000);
   return seconds.toFixed(1);
 }
-function sleep(ms: number): Promise<void> {
+async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
@@ -88,36 +88,6 @@ function normalizeLoadedSession(session: FocusSession): FocusSession {
     unlockAttemptCount: session.unlockAttemptCount ?? 0,
     pendingEmergencyUnlock: normalizePendingEmergencyUnlock(session.pendingEmergencyUnlock),
   };
-}
-
-async function clearShieldWithRetry(): Promise<{ ok: boolean; result: string; attempts: number }> {
-  let lastResult = 'unknown';
-  const maxAttempts = 3;
-  const timeoutMs = 2500;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      const result = await Promise.race<string>([
-        clearShield(),
-        sleep(timeoutMs).then(() => {
-          throw new Error(`clearShield timeout after ${timeoutMs}ms`);
-        }),
-      ]);
-      lastResult = result;
-
-      if (result === 'cleared') {
-        return { ok: true, result, attempts: attempt };
-      }
-    } catch (err) {
-      lastResult = err instanceof Error ? err.message : JSON.stringify(err);
-    }
-
-    if (attempt < maxAttempts) {
-      await sleep(300);
-    }
-  }
-
-  return { ok: false, result: lastResult, attempts: maxAttempts };
 }
 
 export default function FocusSessionScreen() {
