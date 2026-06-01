@@ -84,8 +84,8 @@
             "ios": {
               "appExtensions": [
                 {
-                  "targetName": "TunnelDeviceActivityMonitor",
-                  "bundleIdentifier": "com.adamkuzniarski.tunnel.TunnelDeviceActivityMonitor",
+                  "targetName": "SessionMonitor",
+                  "bundleIdentifier": "com.adamkuzniarski.tunnel.SessionMonitor",
                   "entitlements": {
                     "com.apple.developer.family-controls": true
                   }
