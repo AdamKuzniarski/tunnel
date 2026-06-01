@@ -9,6 +9,8 @@ export type TunnelAuthorizationStatus =
 
 export type TunnelShieldResult = 'applied' | 'cleared' | 'noSelection' | 'unsupported';
 
+export type TunnelSessionMonitorResult = 'scheduled' | 'stopped' | 'failed' | 'unsupported';
+
 export type TunnelSelectionSummary = {
   hasSelection: boolean;
   applicationCount: number;

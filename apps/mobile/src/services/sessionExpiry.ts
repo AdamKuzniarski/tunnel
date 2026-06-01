@@ -1,3 +1,4 @@
+import { stopSessionMonitoring } from '@/services/focusControl';
 import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
 import { clearShieldWithRetry, type ClearShieldStatus } from '@/services/shieldClear';
 
@@ -17,6 +18,11 @@ export async function reconcileExpiredActiveSession(
   const clearShieldStatus = await clearShieldWithRetry();
 
   if (clearShieldStatus.ok) {
+    try {
+      await stopSessionMonitoring();
+    } catch (err) {
+      console.log('stopSessionMonitoring error:', err);
+    }
     await clearActiveSession();
   }
 

@@ -5,5 +5,6 @@ export type {
   TunnelAuthorizationStatus,
   TunnelFocusControlModuleEvents,
   TunnelSelectionSummary,
+  TunnelSessionMonitorResult,
   TunnelShieldResult,
 } from './src/TunnelFocusControl.types';

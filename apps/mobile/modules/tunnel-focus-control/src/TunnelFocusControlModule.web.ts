@@ -4,6 +4,7 @@ import type {
   TunnelAuthorizationStatus,
   TunnelFocusControlModuleEvents,
   TunnelSelectionSummary,
+  TunnelSessionMonitorResult,
   TunnelShieldResult,
 } from './TunnelFocusControl.types';
 
@@ -21,6 +22,14 @@ class TunnelFocusControlModule extends NativeModule<TunnelFocusControlModuleEven
   }
 
   async clearShield(): Promise<TunnelShieldResult> {
+    return 'unsupported';
+  }
+
+  async startSessionMonitoring(): Promise<TunnelSessionMonitorResult> {
+    return 'unsupported';
+  }
+
+  async stopSessionMonitoring(): Promise<TunnelSessionMonitorResult> {
     return 'unsupported';
   }
 

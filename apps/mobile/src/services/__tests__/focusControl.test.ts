@@ -8,6 +8,8 @@ import {
   getAuthorizationStatus,
   getSelectionSummary,
   requestAuthorization,
+  startSessionMonitoring,
+  stopSessionMonitoring,
 } from '../focusControl';
 
 // Screen Time APIs cannot run under Jest; this mock verifies the JS bridge contract only.
@@ -18,6 +20,8 @@ jest.mock('../../../modules/tunnel-focus-control', () => ({
     requestAuthorization: jest.fn(),
     applyShield: jest.fn(),
     clearShield: jest.fn(),
+    startSessionMonitoring: jest.fn(),
+    stopSessionMonitoring: jest.fn(),
     getSelectionSummary: jest.fn(),
     clearSelection: jest.fn(),
   },
@@ -80,6 +84,44 @@ describe('focusControl', () => {
       await expect(clearShield()).resolves.toBe('cleared');
 
       expect(mockTunnelFocusControlModule.clearShield).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('startSessionMonitoring', () => {
+    it('returns the native monitor scheduling result on iOS', async () => {
+      mockTunnelFocusControlModule.startSessionMonitoring.mockResolvedValue('scheduled');
+
+      await expect(startSessionMonitoring(1_700_000_060_000)).resolves.toBe('scheduled');
+
+      expect(mockTunnelFocusControlModule.startSessionMonitoring).toHaveBeenCalledWith(
+        1_700_000_060_000,
+      );
+    });
+
+    it('returns unsupported on Android without calling native monitoring APIs', async () => {
+      setPlatformOS('android');
+
+      await expect(startSessionMonitoring(1_700_000_060_000)).resolves.toBe('unsupported');
+
+      expect(mockTunnelFocusControlModule.startSessionMonitoring).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('stopSessionMonitoring', () => {
+    it('returns the native monitor stop result on iOS', async () => {
+      mockTunnelFocusControlModule.stopSessionMonitoring.mockResolvedValue('stopped');
+
+      await expect(stopSessionMonitoring()).resolves.toBe('stopped');
+
+      expect(mockTunnelFocusControlModule.stopSessionMonitoring).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns unsupported on Android without calling native monitoring APIs', async () => {
+      setPlatformOS('android');
+
+      await expect(stopSessionMonitoring()).resolves.toBe('unsupported');
+
+      expect(mockTunnelFocusControlModule.stopSessionMonitoring).not.toHaveBeenCalled();
     });
   });
 
