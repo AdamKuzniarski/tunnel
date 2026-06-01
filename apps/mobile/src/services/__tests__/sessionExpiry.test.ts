@@ -1,4 +1,4 @@
-import { clearShield } from '@/services/focusControl';
+import { clearShield, stopSessionMonitoring } from '@/services/focusControl';
 import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
 import type { FocusSession } from '@/types/session';
 
@@ -6,6 +6,7 @@ import { reconcileExpiredActiveSession } from '../sessionExpiry';
 
 jest.mock('@/services/focusControl', () => ({
   clearShield: jest.fn(),
+  stopSessionMonitoring: jest.fn(),
 }));
 
 jest.mock('@/services/sessionStorage', () => ({
@@ -14,6 +15,7 @@ jest.mock('@/services/sessionStorage', () => ({
 }));
 
 const mockClearShield = jest.mocked(clearShield);
+const mockStopSessionMonitoring = jest.mocked(stopSessionMonitoring);
 const mockClearActiveSession = jest.mocked(clearActiveSession);
 const mockLoadActiveSession = jest.mocked(loadActiveSession);
 
@@ -35,6 +37,7 @@ describe('reconcileExpiredActiveSession', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockClearShield.mockResolvedValue('cleared');
+    mockStopSessionMonitoring.mockResolvedValue('stopped');
     mockClearActiveSession.mockResolvedValue(undefined);
     mockLoadActiveSession.mockResolvedValue(null);
   });
@@ -45,6 +48,7 @@ describe('reconcileExpiredActiveSession', () => {
     await expect(reconcileExpiredActiveSession(now)).resolves.toEqual({ expired: false });
 
     expect(mockClearShield).not.toHaveBeenCalled();
+    expect(mockStopSessionMonitoring).not.toHaveBeenCalled();
     expect(mockClearActiveSession).not.toHaveBeenCalled();
   });
 
@@ -57,6 +61,7 @@ describe('reconcileExpiredActiveSession', () => {
     });
 
     expect(mockClearShield).toHaveBeenCalledTimes(1);
+    expect(mockStopSessionMonitoring).toHaveBeenCalledTimes(1);
     expect(mockClearActiveSession).toHaveBeenCalledTimes(1);
   });
 
@@ -70,6 +75,7 @@ describe('reconcileExpiredActiveSession', () => {
     });
 
     expect(mockClearShield).toHaveBeenCalledTimes(3);
+    expect(mockStopSessionMonitoring).not.toHaveBeenCalled();
     expect(mockClearActiveSession).not.toHaveBeenCalled();
   });
 });

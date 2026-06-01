@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 import type {
   TunnelAuthorizationStatus,
   TunnelSelectionSummary,
+  TunnelSessionMonitorResult,
   TunnelShieldResult,
 } from '../../modules/tunnel-focus-control';
 
@@ -28,6 +29,22 @@ export async function applyShield(): Promise<TunnelShieldResult> {
 
 export async function clearShield(): Promise<TunnelShieldResult> {
   return TunnelFocusControlModule.clearShield();
+}
+
+export async function startSessionMonitoring(endsAt: number): Promise<TunnelSessionMonitorResult> {
+  if (Platform.OS === 'android') {
+    return 'unsupported';
+  }
+
+  return TunnelFocusControlModule.startSessionMonitoring(endsAt);
+}
+
+export async function stopSessionMonitoring(): Promise<TunnelSessionMonitorResult> {
+  if (Platform.OS === 'android') {
+    return 'unsupported';
+  }
+
+  return TunnelFocusControlModule.stopSessionMonitoring();
 }
 
 export async function getSelectionSummary(): Promise<TunnelSelectionSummary> {
