@@ -2,7 +2,8 @@ const { withDangerousMod, withXcodeProject } = require("@expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 
-const targetName = "TunnelDeviceActivityMonitor";
+const targetName = "SessionMonitor";
+const principalClassName = "TunnelDeviceActivityMonitor";
 const activityName = "tunnel.focusSession";
 const podfilePatchStart =
   "# @generated begin tunnel-device-activity-monitor-development-team";
@@ -17,8 +18,8 @@ private extension DeviceActivityName {
     static let tunnelFocusSession = Self("${activityName}")
 }
 
-@objc(TunnelDeviceActivityMonitor)
-final class TunnelDeviceActivityMonitor: DeviceActivityMonitor {
+@objc(${principalClassName})
+final class ${principalClassName}: DeviceActivityMonitor {
     private let managedSettingsStore = ManagedSettingsStore(
         named: ManagedSettingsStore.Name("tunnel")
     )
@@ -73,7 +74,7 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
 \t\t<key>NSExtensionPointIdentifier</key>
 \t\t<string>com.apple.deviceactivity.monitor-extension</string>
 \t\t<key>NSExtensionPrincipalClass</key>
-\t\t<string>$(PRODUCT_MODULE_NAME).TunnelDeviceActivityMonitor</string>
+\t\t<string>$(PRODUCT_MODULE_NAME).${principalClassName}</string>
 \t</dict>
 </dict>
 </plist>
