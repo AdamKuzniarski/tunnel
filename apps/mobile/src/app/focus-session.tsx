@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { Screen } from '@/components/ui/Screen';
+import { stopSessionMonitoring } from '@/services/focusControl';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 import {
   clearActiveSession,
@@ -88,6 +89,15 @@ function normalizeLoadedSession(session: FocusSession): FocusSession {
     unlockAttemptCount: session.unlockAttemptCount ?? 0,
     pendingEmergencyUnlock: normalizePendingEmergencyUnlock(session.pendingEmergencyUnlock),
   };
+}
+
+async function stopMonitoringAfterSessionEnd() {
+  try {
+    const result = await stopSessionMonitoring();
+    console.log('[session] stopSessionMonitoring result:', result);
+  } catch (err) {
+    console.log('[session] stopSessionMonitoring error:', err);
+  }
 }
 
 export default function FocusSessionScreen() {
@@ -303,6 +313,8 @@ export default function FocusSessionScreen() {
         setSession(null);
         resetUnlockFlow('emergency_unlock_success');
 
+        await stopMonitoringAfterSessionEnd();
+
         try {
           await clearActiveSession();
           console.log('[unlock] active session cleared');
@@ -373,6 +385,7 @@ export default function FocusSessionScreen() {
 
         if (storedSession.status !== 'active') {
           setSession(null);
+          await stopMonitoringAfterSessionEnd();
           await clearActiveSession();
           router.replace('/');
           return;
@@ -396,6 +409,7 @@ export default function FocusSessionScreen() {
             return;
           }
 
+          await stopMonitoringAfterSessionEnd();
           await clearActiveSession();
           setSession(null);
           resetUnlockFlow('initialize_expired_session');
@@ -467,6 +481,7 @@ export default function FocusSessionScreen() {
           return;
         }
 
+        await stopMonitoringAfterSessionEnd();
         await clearActiveSession();
 
         await appendSessionHistoryEntry({
