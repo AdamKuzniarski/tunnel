@@ -1,8 +1,10 @@
 import ExpoModulesCore
+import DeviceActivity
 import FamilyControls
 import ManagedSettings
 
 public class TunnelFocusControlModule: Module {
+    private let deviceActivityCenter = DeviceActivityCenter()
     private let managedSettingsStore = ManagedSettingsStore(
         named: ManagedSettingsStore.Name("tunnel")
     )
@@ -82,11 +84,89 @@ public class TunnelFocusControlModule: Module {
                 return "cleared"
             }
         }
+
+        AsyncFunction("startSessionMonitoring") { (endsAt: Double) async -> String in
+            guard #available(iOS 16.0, *) else {
+                return "unsupported"
+            }
+
+            #if targetEnvironment(simulator)
+            return "unsupported"
+            #else
+            return self.startSessionMonitoring(endsAt: endsAt)
+            #endif
+        }
+
+        AsyncFunction("stopSessionMonitoring") { () async -> String in
+            guard #available(iOS 16.0, *) else {
+                return "unsupported"
+            }
+
+            #if targetEnvironment(simulator)
+            return "unsupported"
+            #else
+            return self.stopSessionMonitoring()
+            #endif
+        }
     }
 }
 
 @available(iOS 16.0, *)
 private extension TunnelFocusControlModule {
+    static let sessionActivityName = DeviceActivityName("tunnel.focusSession")
+
+    func startSessionMonitoring(endsAt: Double) -> String {
+        let endDate = Date(timeIntervalSince1970: endsAt / 1000)
+        let startDate = Date()
+
+        guard endDate > startDate.addingTimeInterval(1) else {
+            print("[TunnelFocusControl] startSessionMonitoring failed: end date is not in the future")
+            return "failed"
+        }
+
+        var calendar = Calendar.current
+        calendar.timeZone = TimeZone.current
+
+        let components: Set<Calendar.Component> = [
+            .year,
+            .month,
+            .day,
+            .hour,
+            .minute,
+            .second
+        ]
+        var startComponents = calendar.dateComponents(components, from: startDate)
+        var endComponents = calendar.dateComponents(components, from: endDate)
+        startComponents.calendar = calendar
+        startComponents.timeZone = calendar.timeZone
+        endComponents.calendar = calendar
+        endComponents.timeZone = calendar.timeZone
+
+        let schedule = DeviceActivitySchedule(
+            intervalStart: startComponents,
+            intervalEnd: endComponents,
+            repeats: false
+        )
+
+        do {
+            try deviceActivityCenter.startMonitoring(
+                Self.sessionActivityName,
+                during: schedule
+            )
+            print("[TunnelFocusControl] startSessionMonitoring scheduled until \(endDate)")
+            return "scheduled"
+        } catch {
+            print("[TunnelFocusControl] startSessionMonitoring error: \(error)")
+            return "failed"
+        }
+    }
+
+    func stopSessionMonitoring() -> String {
+        deviceActivityCenter.stopMonitoring([Self.sessionActivityName])
+        print("[TunnelFocusControl] stopSessionMonitoring stopped")
+        return "stopped"
+    }
+
     func clearShieldSettings() {
         print("[TunnelFocusControl] clearShieldSettings: named + legacy stores")
         clearShield(in: managedSettingsStore)

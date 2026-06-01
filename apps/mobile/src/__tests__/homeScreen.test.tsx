@@ -45,6 +45,7 @@ jest.mock('@/services/sessionStorage', () => ({
 jest.mock('@/services/focusControl', () => ({
   clearShield: jest.fn(),
   getSelectionSummary: jest.fn(),
+  stopSessionMonitoring: jest.fn(),
 }));
 
 jest.mock('@/services/focusSessionStart', () => ({
