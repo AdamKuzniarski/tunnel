@@ -4,6 +4,10 @@ const path = require("path");
 
 const targetName = "TunnelDeviceActivityMonitor";
 const activityName = "tunnel.focusSession";
+const podfilePatchStart =
+  "# @generated begin tunnel-device-activity-monitor-development-team";
+const podfilePatchEnd =
+  "# @generated end tunnel-device-activity-monitor-development-team";
 
 const swiftSource = `import DeviceActivity
 import Foundation
@@ -99,6 +103,50 @@ function writeMonitorFiles(iosRoot) {
   );
 }
 
+function buildPodfilePatch(developmentTeam) {
+  return `${podfilePatchStart}
+    installer.pods_project.targets.each do |target|
+      next unless target.respond_to?(:product_type) && target.product_type == 'com.apple.product-type.bundle'
+
+      target.build_configurations.each do |config|
+        config.build_settings['DEVELOPMENT_TEAM'] = '${developmentTeam}'
+      end
+    end
+${podfilePatchEnd}`;
+}
+
+function patchPodfile(iosRoot, developmentTeam) {
+  if (!developmentTeam) {
+    return;
+  }
+
+  const podfilePath = path.join(iosRoot, "Podfile");
+  if (!fs.existsSync(podfilePath)) {
+    return;
+  }
+
+  const podfile = fs.readFileSync(podfilePath, "utf8");
+  const patch = buildPodfilePatch(developmentTeam);
+  const patchPattern = new RegExp(
+    `${podfilePatchStart}[\\s\\S]*?${podfilePatchEnd}`,
+  );
+
+  if (patchPattern.test(podfile)) {
+    fs.writeFileSync(podfilePath, podfile.replace(patchPattern, patch));
+    return;
+  }
+
+  const postInstallEnd = "\n  end\nend";
+  if (!podfile.includes(postInstallEnd)) {
+    throw new Error("Could not find the iOS Podfile post_install block.");
+  }
+
+  fs.writeFileSync(
+    podfilePath,
+    podfile.replace(postInstallEnd, `\n\n${patch}${postInstallEnd}`),
+  );
+}
+
 function getBuildConfigurations(project, configurationListId) {
   const configurationList =
     project.pbxXCConfigurationList()[configurationListId];
@@ -117,7 +165,12 @@ function getBuildConfigurations(project, configurationListId) {
   );
 }
 
-function configureExtensionBuildSettings(project, target, bundleIdentifier) {
+function configureExtensionBuildSettings(
+  project,
+  target,
+  bundleIdentifier,
+  developmentTeam,
+) {
   for (const [, configuration] of getBuildConfigurations(
     project,
     target.pbxNativeTarget.buildConfigurationList,
@@ -128,6 +181,7 @@ function configureExtensionBuildSettings(project, target, bundleIdentifier) {
       CLANG_ENABLE_MODULES: "YES",
       CODE_SIGN_ENTITLEMENTS: `${targetName}/${targetName}.entitlements`,
       CURRENT_PROJECT_VERSION: "1",
+      ...(developmentTeam ? { DEVELOPMENT_TEAM: developmentTeam } : {}),
       INFOPLIST_FILE: `${targetName}/Info.plist`,
       IPHONEOS_DEPLOYMENT_TARGET: "16.0",
       LD_RUNPATH_SEARCH_PATHS: [
@@ -157,7 +211,7 @@ function ensureMainGroupChild(project, groupUuid) {
   }
 }
 
-function ensureExtensionTarget(project, bundleIdentifier) {
+function ensureExtensionTarget(project, bundleIdentifier, developmentTeam) {
   const existingTarget = project.pbxTargetByName(targetName);
 
   if (existingTarget) {
@@ -165,6 +219,7 @@ function ensureExtensionTarget(project, bundleIdentifier) {
       project,
       { pbxNativeTarget: existingTarget },
       bundleIdentifier,
+      developmentTeam,
     );
     return;
   }
@@ -194,21 +249,33 @@ function ensureExtensionTarget(project, bundleIdentifier) {
   );
   project.addFile("Info.plist", group.uuid);
   project.addFile(`${targetName}.entitlements`, group.uuid);
-  configureExtensionBuildSettings(project, target, bundleIdentifier);
+  configureExtensionBuildSettings(
+    project,
+    target,
+    bundleIdentifier,
+    developmentTeam,
+  );
 }
 
-const withTunnelDeviceActivityMonitor = (config) => {
+const withTunnelDeviceActivityMonitor = (config, options = {}) => {
+  const developmentTeam = options.developmentTeam ?? config.ios?.appleTeamId;
+
   config = withDangerousMod(config, [
     "ios",
     (modConfig) => {
       writeMonitorFiles(modConfig.modRequest.platformProjectRoot);
+      patchPodfile(modConfig.modRequest.platformProjectRoot, developmentTeam);
       return modConfig;
     },
   ]);
 
   return withXcodeProject(config, (modConfig) => {
     const bundleIdentifier = `${modConfig.ios?.bundleIdentifier}.${targetName}`;
-    ensureExtensionTarget(modConfig.modResults, bundleIdentifier);
+    ensureExtensionTarget(
+      modConfig.modResults,
+      bundleIdentifier,
+      developmentTeam,
+    );
     return modConfig;
   });
 };
