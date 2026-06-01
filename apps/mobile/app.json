@@ -78,7 +78,22 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "5e90ff6b-6ee2-48fc-a771-5715800cba47"
+        "projectId": "5e90ff6b-6ee2-48fc-a771-5715800cba47",
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "TunnelDeviceActivityMonitor",
+                  "bundleIdentifier": "com.adamkuzniarski.tunnel.TunnelDeviceActivityMonitor",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true
+                  }
+                }
+              ]
+            }
+          }
+        }
       }
     }
   }
