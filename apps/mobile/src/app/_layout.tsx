@@ -30,45 +30,38 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   useEffect(() => {
+    let isReconciling = false;
+
     function clearExpiredSession() {
-      void reconcileExpiredActiveSession().catch((err) => {
-        console.log('reconcileExpiredActiveSession error:', err);
-      });
+      if (isReconciling) {
+        return;
+      }
+
+      isReconciling = true;
+      void reconcileExpiredActiveSession()
+        .catch((err) => {
+          console.log('reconcileExpiredActiveSession error:', err);
+        })
+        .finally(() => {
+          isReconciling = false;
+        });
     }
 
-    function stopExpiryChecks() {
+    clearExpiredSession();
+    expiryIntervalRef.current = setInterval(clearExpiredSession, 5_000);
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        clearExpiredSession();
+      }
+    });
+
+    return () => {
+      subscription.remove();
       if (expiryIntervalRef.current) {
         clearInterval(expiryIntervalRef.current);
         expiryIntervalRef.current = null;
       }
-    }
-
-    function startExpiryChecks() {
-      clearExpiredSession();
-
-      if (!expiryIntervalRef.current) {
-        expiryIntervalRef.current = setInterval(clearExpiredSession, 5_000);
-      }
-    }
-
-    clearExpiredSession();
-
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        startExpiryChecks();
-        return;
-      }
-
-      stopExpiryChecks();
-    });
-
-    if (AppState.currentState === 'active') {
-      startExpiryChecks();
-    }
-
-    return () => {
-      subscription.remove();
-      stopExpiryChecks();
     };
   }, []);
 
