@@ -1,7 +1,7 @@
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
 
-import { clearShield } from '@/services/focusControl';
+import { clearShield, stopSessionMonitoring } from '@/services/focusControl';
 import { appendSessionHistoryEntry } from '@/services/sessionHistoryStorage';
 import {
   clearActiveSession,
@@ -11,7 +11,7 @@ import {
 import type { FocusSession } from '@/types/session';
 
 import FocusSessionScreen from '../app/focus-session';
-//?
+
 const mockReplace = jest.fn();
 const mockRouter = {
   replace: mockReplace,
@@ -31,6 +31,7 @@ jest.mock('react-native-safe-area-context', () => {
 
 jest.mock('@/services/focusControl', () => ({
   clearShield: jest.fn(),
+  stopSessionMonitoring: jest.fn(),
 }));
 
 jest.mock('@/services/sessionHistoryStorage', () => ({
@@ -44,6 +45,7 @@ jest.mock('@/services/sessionStorage', () => ({
 }));
 
 const mockClearShield = jest.mocked(clearShield);
+const mockStopSessionMonitoring = jest.mocked(stopSessionMonitoring);
 const mockAppendSessionHistoryEntry = jest.mocked(appendSessionHistoryEntry);
 const mockClearActiveSession = jest.mocked(clearActiveSession);
 const mockLoadActiveSession = jest.mocked(loadActiveSession);
@@ -97,6 +99,7 @@ describe('FocusSessionScreen', () => {
     jest.clearAllMocks();
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     mockClearShield.mockResolvedValue('cleared');
+    mockStopSessionMonitoring.mockResolvedValue('stopped');
     mockAppendSessionHistoryEntry.mockResolvedValue(undefined);
     mockClearActiveSession.mockResolvedValue(undefined);
     mockSaveActiveSession.mockResolvedValue(undefined);
