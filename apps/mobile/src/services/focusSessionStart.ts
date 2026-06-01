@@ -1,10 +1,16 @@
-import { applyShield, getSelectionSummary } from '@/services/focusControl';
+import {
+  applyShield,
+  clearShield,
+  getSelectionSummary,
+  startSessionMonitoring,
+  stopSessionMonitoring,
+} from '@/services/focusControl';
 import { saveActiveSession } from '@/services/sessionStorage';
 import type { FocusSession, FocusSessionDurationMinutes } from '@/types/session';
 
 export type StartFocusSessionResult =
   | { ok: true; session: FocusSession }
-  | { ok: false; reason: 'no_selection' | 'shield_failed'; detail?: string };
+  | { ok: false; reason: 'no_selection' | 'shield_failed' | 'monitor_failed'; detail?: string };
 
 export async function startFocusSession(
   durationMinutes: FocusSessionDurationMinutes,
@@ -13,12 +19,6 @@ export async function startFocusSession(
 
   if (!nativeSelectionSummary.hasSelection) {
     return { ok: false, reason: 'no_selection' };
-  }
-
-  const shieldResult = await applyShield();
-
-  if (shieldResult !== 'applied') {
-    return { ok: false, reason: 'shield_failed', detail: shieldResult };
   }
 
   const startedAt = Date.now();
@@ -31,7 +31,26 @@ export async function startFocusSession(
     unlockAttemptCount: 0,
   };
 
-  await saveActiveSession(session);
+  const shieldResult = await applyShield();
+
+  if (shieldResult !== 'applied') {
+    return { ok: false, reason: 'shield_failed', detail: shieldResult };
+  }
+
+  const monitorResult = await startSessionMonitoring(session.endsAt);
+
+  if (monitorResult !== 'scheduled') {
+    await clearShield();
+    return { ok: false, reason: 'monitor_failed', detail: monitorResult };
+  }
+
+  try {
+    await saveActiveSession(session);
+  } catch (err) {
+    await stopSessionMonitoring();
+    await clearShield();
+    throw err;
+  }
 
   return { ok: true, session };
 }
