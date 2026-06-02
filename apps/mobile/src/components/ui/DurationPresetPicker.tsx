@@ -26,6 +26,8 @@ export function DurationPresetPicker({
             key={duration}
             onPress={() => onChange(duration)}
             disabled={disabled}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
             style={({ pressed }) => [
               styles.segment,
               selected && styles.segmentSelected,
