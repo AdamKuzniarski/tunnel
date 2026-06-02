@@ -1,13 +1,13 @@
 import { act, render, waitFor } from '@testing-library/react-native';
 import type { PropsWithChildren } from 'react';
-import { AppState } from 'react-native';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import { reconcileExpiredActiveSession } from '@/services/sessionExpiry';
 
 const mockPreventAutoHideAsync = jest.fn();
 const mockHideAsync = jest.fn();
 const mockRemoveAppStateListener = jest.fn();
-let mockAppStateHandler: ((state: string) => void) | null = null;
+let mockAppStateHandler: ((state: AppStateStatus) => void) | null = null;
 
 jest.mock('expo-router', () => ({
   Stack: () => {
