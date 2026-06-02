@@ -1,4 +1,4 @@
-# tunnel focus
+# tunnel 
 
 ** Stay focused**
 
@@ -10,7 +10,7 @@
 ![iOS](https://img.shields.io/badge/iOS-Screen%20Time-111111?logo=apple&logoColor=white)
 ![Jest](https://img.shields.io/badge/Tests-Jest-C21325?logo=jest&logoColor=white)
 
-tunnel focus is an iPhone-first productivity app built as a portfolio project to demonstrate how React Native and Swift can work together in a real native iOS feature.
+tunnel is an iPhone-first productivity app built as a portfolio project to demonstrate how React Native and Swift can work together in a real native iOS feature.
 
 It helps users block selected distractions during timed focus sessions, with intentional friction when they try to quit early.
 
@@ -24,13 +24,13 @@ It helps users block selected distractions during timed focus sessions, with int
 
 ## What it does
 
-tunnel focus helps users create focused work sessions by blocking selected distractions for a chosen duration.
+tunnel  helps users create focused work sessions by blocking selected distractions for a chosen duration.
 
 During a session, the app keeps the experience intentionally simple: a countdown, a clear focus state, and an emergency unlock flow that adds friction before quitting early.
 
 ## Why this project matters
 
-tunnel focus is more than a React Native UI demo. It combines a mobile interface with native Swift code to access iOS Screen Time features.
+tunnel is more than a React Native UI demo. It combines a mobile interface with native Swift code to access iOS Screen Time features.
 
 The project demonstrates working across the JavaScript/native boundary, handling platform-specific APIs, and building a complete focus-session flow from setup to history.
 
