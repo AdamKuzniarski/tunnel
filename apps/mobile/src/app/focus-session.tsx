@@ -13,11 +13,17 @@ import {
   saveActiveSession,
 } from '@/services/sessionStorage';
 import { clearShieldWithRetry } from '@/services/shieldClear';
+import {
+  HOLD_TO_UNLOCK_DURATION_MS,
+  formatHoldProgress,
+  getNextUnlockAttemptCount,
+  getUnlockDelaySeconds,
+  normalizeLoadedSession,
+  normalizePendingEmergencyUnlock,
+} from '@/services/unlockRitual';
 import { colors, fontFamilies, radius, spacing, typography } from '@/theme';
 import type { FocusSession, PendingEmergencyUnlock } from '@/types/session';
 import type { EmergencyUnlockReason } from '@/types/sessionHistory';
-
-const HOLD_TO_UNLOCK_DURATION_MS = 5000;
 
 type UnlockStep = 'idle' | 'hold' | 'reason' | 'delay' | 'unlocking';
 
@@ -30,65 +36,10 @@ const UNLOCK_REASON_OPTIONS: {
   { value: 'wrong_blocklist', label: 'Wrong blocklist' },
   { value: 'other', label: 'Other' },
 ];
-
-const UNLOCK_REASON_VALUES = new Set<EmergencyUnlockReason>(
-  UNLOCK_REASON_OPTIONS.map((option) => option.value),
-);
-
-function getUnlockDelaySeconds(attemptCount: number): number {
-  if (attemptCount <= 1) {
-    return 10;
-  }
-
-  if (attemptCount === 2) {
-    return 30;
-  }
-
-  return 60;
-}
-
-function getNextUnlockAttemptCount(session: FocusSession): number {
-  return (session.unlockAttemptCount ?? 0) + 1;
-}
-
-function formatHoldProgress(progressMs: number): string {
-  const seconds = Math.min(progressMs / 1000, HOLD_TO_UNLOCK_DURATION_MS / 1000);
-  return seconds.toFixed(1);
-}
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-}
-
-function normalizePendingEmergencyUnlock(
-  pending: FocusSession['pendingEmergencyUnlock'],
-): PendingEmergencyUnlock | undefined {
-  if (!pending) {
-    return undefined;
-  }
-
-  if (!UNLOCK_REASON_VALUES.has(pending.reason)) {
-    return undefined;
-  }
-
-  if (
-    !Number.isFinite(pending.delaySeconds) ||
-    !Number.isFinite(pending.startedAt) ||
-    !Number.isFinite(pending.unlockAt)
-  ) {
-    return undefined;
-  }
-
-  return pending;
-}
-
-function normalizeLoadedSession(session: FocusSession): FocusSession {
-  return {
-    ...session,
-    unlockAttemptCount: session.unlockAttemptCount ?? 0,
-    pendingEmergencyUnlock: normalizePendingEmergencyUnlock(session.pendingEmergencyUnlock),
-  };
 }
 
 async function stopMonitoringAfterSessionEnd() {
