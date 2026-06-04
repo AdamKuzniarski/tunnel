@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react';
 import { clearShield, getSelectionSummary } from '@/services/focusControl';
 import { startFocusSession } from '@/services/focusSessionStart';
 import { loadOnboardingCompleted } from '@/services/onBoardingStorage';
+import * as sessionExpiry from '@/services/sessionExpiry';
 import { clearActiveSession, loadActiveSession } from '@/services/sessionStorage';
 import type { FocusSession } from '@/types/session';
 
@@ -227,5 +228,85 @@ describe('HomeScreen', () => {
     fireEvent.press(getByText('Start focus session'));
 
     expect(await findByText('Could not start focus protection. Try again.')).toBeTruthy();
+  });
+
+  it('starts a focus session with 60 minutes when 60 is selected', async () => {
+    mockGetSelectionSummary.mockResolvedValue(readySelection);
+
+    const { findByText, getByRole, getByText } = render(<HomeScreen />);
+    await findByText('2 apps ready to block');
+
+    fireEvent.press(getByRole('button', { name: '60 min' }));
+    fireEvent.press(getByText('Start focus session'));
+
+    await waitFor(() => {
+      expect(mockStartFocusSession).toHaveBeenCalledWith(60);
+    });
+  });
+
+  it('starts a focus session with 90 minutes when 90 is selected', async () => {
+    mockGetSelectionSummary.mockResolvedValue(readySelection);
+
+    const { findByText, getByRole, getByText } = render(<HomeScreen />);
+    await findByText('2 apps ready to block');
+
+    fireEvent.press(getByRole('button', { name: '90 min' }));
+    fireEvent.press(getByText('Start focus session'));
+
+    await waitFor(() => {
+      expect(mockStartFocusSession).toHaveBeenCalledWith(90);
+    });
+  });
+
+  it('pressing the empty blocklist guidance navigates to the selection screen', async () => {
+    const { findByText, getByText } = render(<HomeScreen />);
+    await findByText('Set up your blocklist first');
+
+    fireEvent.press(getByText('Set up your blocklist first'));
+
+    expect(mockPush).toHaveBeenCalledWith('/selection?returnTo=home');
+  });
+
+  it('pressing Edit blocklist navigates to the selection screen', async () => {
+    const { findByText, getByText } = render(<HomeScreen />);
+    await findByText('Edit blocklist');
+
+    fireEvent.press(getByText('Edit blocklist'));
+
+    expect(mockPush).toHaveBeenCalledWith('/selection?returnTo=home');
+  });
+
+  it('pressing History navigates to the history screen', async () => {
+    const { findByText, getByText } = render(<HomeScreen />);
+    await findByText('History');
+
+    fireEvent.press(getByText('History'));
+
+    expect(mockPush).toHaveBeenCalledWith('/history');
+  });
+
+  it('pressing Settings navigates to the settings screen', async () => {
+    const { findByText, getByText } = render(<HomeScreen />);
+    await findByText('Settings');
+
+    fireEvent.press(getByText('Settings'));
+
+    expect(mockPush).toHaveBeenCalledWith('/settings');
+  });
+
+  it('shows an error when expired session reconciliation fails to clear the shield', async () => {
+    mockLoadActiveSession.mockResolvedValue(activeSession({ endsAt: now }));
+    jest.spyOn(sessionExpiry, 'reconcileExpiredActiveSession').mockResolvedValue({
+      expired: true,
+      clearShieldStatus: { ok: false, result: 'shield-clear-failed', attempts: 3 },
+    });
+
+    const { findByText } = render(<HomeScreen />);
+
+    expect(
+      await findByText(
+        'Shield clear did not confirm success after 3 attempts: shield-clear-failed',
+      ),
+    ).toBeTruthy();
   });
 });
