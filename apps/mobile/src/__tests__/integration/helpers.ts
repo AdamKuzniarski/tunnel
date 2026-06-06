@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 import TunnelFocusControlModule from '../../../modules/tunnel-focus-control';
+import { saveActiveSession } from '@/services/sessionStorage';
 import type {
   TunnelAuthorizationStatus,
   TunnelSessionMonitorResult,
@@ -12,6 +13,32 @@ import type {
 // Each integration test file must declare jest.mock('../../../modules/tunnel-focus-control', ...)
 // at module scope before this helper is used.
 export const nativeCalls = jest.mocked(TunnelFocusControlModule);
+
+// --- Session presets ---
+
+export async function saveExpiredSession(): Promise<void> {
+  const now = Date.now();
+  await saveActiveSession({
+    id: 'expired-test-session',
+    durationMinutes: 30,
+    startedAt: now - 60 * 60 * 1000,
+    endsAt: now - 10 * 60 * 1000,
+    status: 'active',
+    unlockAttemptCount: 0,
+  });
+}
+
+export async function saveRunningSession(): Promise<void> {
+  const now = Date.now();
+  await saveActiveSession({
+    id: 'running-test-session',
+    durationMinutes: 30,
+    startedAt: now - 5 * 60 * 1000,
+    endsAt: now + 25 * 60 * 1000,
+    status: 'active',
+    unlockAttemptCount: 0,
+  });
+}
 
 // --- Reset ---
 
