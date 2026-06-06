@@ -17,7 +17,7 @@ export const nativeCalls = jest.mocked(TunnelFocusControlModule);
 
 export async function resetTestState(): Promise<void> {
   await AsyncStorage.clear();
-  jest.clearAllMocks();
+  jest.resetAllMocks();
   Object.defineProperty(Platform, 'OS', { configurable: true, get: () => 'ios' });
 }
 
