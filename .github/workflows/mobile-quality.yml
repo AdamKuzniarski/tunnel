@@ -1,0 +1,35 @@
+name: Mobile quality
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/mobile/**'
+
+jobs:
+  mobile-quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run test -- --runInBand
+
+      - run: npm run test:coverage -- --runInBand
