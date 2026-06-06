@@ -1,6 +1,6 @@
 # tunnel 
 
-** Stay focused**
+**Stay focused**
 
 ![Expo](https://img.shields.io/badge/Expo-55-000020?logo=expo&logoColor=white)
 ![React Native](https://img.shields.io/badge/React%20Native-0.83-61DAFB?logo=react&logoColor=black)
