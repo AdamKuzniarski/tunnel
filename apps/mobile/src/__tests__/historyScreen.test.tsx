@@ -79,9 +79,7 @@ describe('HistoryScreen', () => {
   it('shows empty state when there are no history entries', async () => {
     const { getByText } = await renderLoaded([]);
 
-    expect(
-      getByText('Your completed sessions and unlock events will appear here.'),
-    ).toBeTruthy();
+    expect(getByText('Your completed sessions and unlock events will appear here.')).toBeTruthy();
   });
 
   it('renders completed session outcome and duration', async () => {
@@ -103,7 +101,7 @@ describe('HistoryScreen', () => {
     expect(getByText(/Started:/)).toBeTruthy();
     expect(getByText(/Ended:/)).toBeTruthy();
   });
-
+  //
   it('calls loadSessionHistory again when refresh is pressed', async () => {
     const { getByText } = await renderLoaded();
 
