@@ -30,6 +30,4 @@ jobs:
 
       - run: npm run lint
 
-      - run: npm run test -- --runInBand
-
       - run: npm run test:coverage -- --runInBand

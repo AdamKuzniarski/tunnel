@@ -40,6 +40,24 @@ export async function saveRunningSession(): Promise<void> {
   });
 }
 
+export async function savePendingUnlockSession(): Promise<void> {
+  const now = Date.now();
+  await saveActiveSession({
+    id: 'pending-unlock-test-session',
+    durationMinutes: 30,
+    startedAt: now - 10000,
+    endsAt: now + 20 * 60 * 1000,
+    status: 'active',
+    unlockAttemptCount: 1,
+    pendingEmergencyUnlock: {
+      reason: 'urgent',
+      delaySeconds: 10,
+      startedAt: now - 11000,
+      unlockAt: now - 1000,
+    },
+  });
+}
+
 // --- Reset ---
 
 export async function resetTestState(): Promise<void> {

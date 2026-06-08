@@ -69,11 +69,10 @@ describe('focus-start cleanup: storage save fails', () => {
 
     await waitFor(() => {
       expect(nativeCalls.applyShield).toHaveBeenCalledTimes(1);
+      expect(nativeCalls.startSessionMonitoring).toHaveBeenCalledTimes(1);
+      expect(nativeCalls.stopSessionMonitoring).toHaveBeenCalledTimes(1);
+      expect(nativeCalls.clearShield).toHaveBeenCalledTimes(1);
     });
-
-    expect(nativeCalls.startSessionMonitoring).toHaveBeenCalledTimes(1);
-    expect(nativeCalls.stopSessionMonitoring).toHaveBeenCalledTimes(1);
-    expect(nativeCalls.clearShield).toHaveBeenCalledTimes(1);
 
     const raw = await AsyncStorage.getItem('tunnel:active-session');
     expect(raw).toBeNull();

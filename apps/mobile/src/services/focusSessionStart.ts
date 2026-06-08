@@ -33,6 +33,10 @@ export async function startFocusSession(
 
   const shieldResult = await applyShield();
 
+  if (shieldResult === 'noSelection') {
+    return { ok: false, reason: 'no_selection' };
+  }
+
   if (shieldResult !== 'applied') {
     return { ok: false, reason: 'shield_failed', detail: shieldResult };
   }
