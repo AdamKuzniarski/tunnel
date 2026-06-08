@@ -61,6 +61,7 @@ The project demonstrates working across the JavaScript/native boundary, handling
 **Quality**
 
 - Jest tests for core app logic
+- Manual iOS QA plan for real-device TestFlight verification: [docs/manual-ios-qa.md](docs/manual-ios-qa.md)
 - Small feature-based app structure
 - Clear separation between UI, services, native bridge wrappers, storage, and shared types
 
