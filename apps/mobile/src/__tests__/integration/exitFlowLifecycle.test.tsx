@@ -66,7 +66,7 @@ describe('exit flow lifecycle', () => {
     fireEvent(getByText('0.0 / 5.0s'), 'pressIn');
     await advance(5_000);
 
-    fireEvent.press(getByText('Why are you leaving?'));
+    getByText('Why are you leaving?');
     fireEvent.press(getByText('Something urgent'));
 
     await waitFor(async () => {
@@ -95,18 +95,19 @@ describe('exit flow lifecycle', () => {
   });
 
   it('keeps session recoverable and skips history when native cleanup fails', async () => {
-    jest.useFakeTimers();
     nativeCalls.clearShield.mockResolvedValue('noSelection');
 
     const { getByText, findByText } = render(<FocusSessionScreen />);
 
     await findByText(/\d+:\d\d/);
 
+    jest.useFakeTimers();
+
     fireEvent.press(getByText('Emergency unlock'));
     fireEvent(getByText('0.0 / 5.0s'), 'pressIn');
     await advance(5_000);
 
-    await findByText('Why are you leaving?');
+    getByText('Why are you leaving?');
     fireEvent.press(getByText('Something urgent'));
 
     await advance(10_000);
