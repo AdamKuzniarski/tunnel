@@ -9,3 +9,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 // Work around Reanimated mock requiring this global in some RN versions.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (global as any).__reanimatedWorkletInit = () => {};
+
+jest.mock('expo-localization', () => ({
+  getLocales: () => [{ languageCode: 'en', languageTag: 'en-US' }],
+}));
