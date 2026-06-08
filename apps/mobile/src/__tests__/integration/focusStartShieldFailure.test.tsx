@@ -76,6 +76,6 @@ describe('focus-start cleanup: shield fails', () => {
 
     expect(mockReplace).not.toHaveBeenCalledWith('/focus-session');
 
-    await findByText('Could not start focus protection. Try again.');
+    await findByText('Set up your blocklist before starting a session.');
   });
 });
