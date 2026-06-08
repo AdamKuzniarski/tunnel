@@ -63,7 +63,7 @@ describe('startFocusSession', () => {
     expect(mockSaveActiveSession).not.toHaveBeenCalled();
   });
 
-  it('returns shield_failed when the native shield is not applied', async () => {
+  it('returns no_selection when the native shield reports no selection', async () => {
     mockGetSelectionSummary.mockResolvedValue({
       hasSelection: true,
       applicationCount: 1,
@@ -74,8 +74,27 @@ describe('startFocusSession', () => {
 
     await expect(startFocusSession(60)).resolves.toEqual({
       ok: false,
+      reason: 'no_selection',
+    });
+
+    expect(mockApplyShield).toHaveBeenCalledTimes(1);
+    expect(mockStartSessionMonitoring).not.toHaveBeenCalled();
+    expect(mockSaveActiveSession).not.toHaveBeenCalled();
+  });
+
+  it('returns shield_failed when the native shield returns a non-noSelection error', async () => {
+    mockGetSelectionSummary.mockResolvedValue({
+      hasSelection: true,
+      applicationCount: 1,
+      categoryCount: 0,
+      webDomainCount: 0,
+    });
+    mockApplyShield.mockResolvedValue('notDetermined');
+
+    await expect(startFocusSession(60)).resolves.toEqual({
+      ok: false,
       reason: 'shield_failed',
-      detail: 'noSelection',
+      detail: 'notDetermined',
     });
 
     expect(mockApplyShield).toHaveBeenCalledTimes(1);

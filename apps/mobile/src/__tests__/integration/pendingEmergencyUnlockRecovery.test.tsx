@@ -5,7 +5,12 @@ import { Platform } from 'react-native';
 
 import FocusSessionScreen from '../../app/focus-session';
 
-import { nativeCalls, setMonitoringSuccess, setProtectionSuccess } from './helpers';
+import {
+  nativeCalls,
+  savePendingUnlockSession,
+  setMonitoringSuccess,
+  setProtectionSuccess,
+} from './helpers';
 
 jest.mock('../../../modules/tunnel-focus-control', () => ({
   __esModule: true,
@@ -33,25 +38,6 @@ jest.mock('react-native-safe-area-context', () => {
     SafeAreaView: ({ children }: PropsWithChildren) => <View>{children}</View>,
   };
 });
-
-async function savePendingUnlockSession() {
-  const now = Date.now();
-  const session = {
-    id: String(now - 10000),
-    durationMinutes: 30,
-    startedAt: now - 10000,
-    endsAt: now + 20 * 60 * 1000,
-    status: 'active',
-    unlockAttemptCount: 1,
-    pendingEmergencyUnlock: {
-      reason: 'urgent',
-      delaySeconds: 10,
-      startedAt: now - 11000,
-      unlockAt: now - 1000,
-    },
-  };
-  await AsyncStorage.setItem('tunnel:active-session', JSON.stringify(session));
-}
 
 describe('pending emergency unlock recovery', () => {
   beforeEach(async () => {
